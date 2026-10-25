@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Confidentialité · Aube</title>
+<link rel="icon" href="icon-192.png" type="image/png">
+<style>
+:root{--bg:#F2F4F8;--ink:#0B1220;--muted:#5B6476;--accent:#007AFF;--card:#fff;--line:rgba(11,18,32,.1)}
+@media (prefers-color-scheme:dark){:root{--bg:#05070D;--ink:#F5F6FA;--muted:#A0A7B5;--accent:#0A84FF;--card:#16181F;--line:rgba(255,255,255,.1);color-scheme:dark}}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,sans-serif}
+main{max-width:720px;margin:0 auto;padding:40px 20px 60px}
+article{background:var(--card);border-radius:22px;padding:28px 24px;border:1px solid var(--line)}
+h1{font-size:30px;letter-spacing:-.02em;margin:0 0 4px}
+h2{font-size:19px;margin:28px 0 6px}
+p,li{color:var(--ink)} .muted{color:var(--muted);font-size:14px}
+a{color:var(--accent)} .todo{background:#FFF3C4;color:#5C4400;border-radius:6px;padding:0 4px}
+@media (prefers-color-scheme:dark){.todo{background:#4A3A00;color:#FFE7A3}}
+</style>
+</head>
+<body>
+<main>
+<p><a href="./">← Retour à Aube</a></p>
+<article>
+<h1>Politique de confidentialité</h1>
+<p class="muted">Dernière mise à jour : <span class="todo">[date]</span></p>
+
+<h2>Qui est responsable de tes données ?</h2>
+<p>Aube est édité par <span class="todo">[ton nom]</span>. Contact : <span class="todo">[ton e-mail de contact]</span>.</p>
+
+<h2>Ce que nous enregistrons</h2>
+<ul>
+  <li>Ton adresse e-mail et ton prénom, pour ton compte.</li>
+  <li>Ce que tu saisis dans Aube : tâches, rendez-vous, lieux, objectifs, nombre de pas, séances de sport.</li>
+  <li>Tes réglages d'affichage, stockés uniquement dans ton navigateur.</li>
+</ul>
+<p>Aube n'affiche aucune publicité, ne revend aucune donnée et n'utilise pas de traceur publicitaire.</p>
+
+<h2>Où sont stockées tes données ?</h2>
+<p>Ton compte et tes données sont hébergés par Google Firebase (Authentication et Cloud Firestore), dans un centre de données situé en Europe. Chaque compte ne peut accéder qu'à ses propres données.</p>
+
+<h2>Intelligence artificielle</h2>
+<p>Certaines fonctions (brief du matin rédigé, assistant, analyse de notes) envoient le texte concerné au service d'IA Mistral AI (France). Pendant la bêta gratuite, Mistral peut utiliser ces textes pour améliorer ses modèles. Si tu ne le souhaites pas, n'utilise pas ces fonctions : l'analyse automatique intégrée fonctionne sans IA.</p>
+
+<h2>Tes droits</h2>
+<p>Depuis Comptes › Mon compte, tu peux télécharger toutes tes données (export .json) et supprimer ton compte avec toutes tes données à tout moment. Pour toute autre demande (accès, rectification, opposition), écris à <span class="todo">[ton e-mail de contact]</span>. Tu peux aussi saisir la CNIL (cnil.fr).</p>
+
+<h2>Durée de conservation</h2>
+<p>Tes données sont conservées tant que ton compte existe. Elles sont supprimées dès que tu supprimes ton compte.</p>
+</article>
+</main>
+</body>
+</html>
