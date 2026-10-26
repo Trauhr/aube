@@ -131,7 +131,20 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .chip.ai{background:color-mix(in srgb,var(--violet) 16%,transparent);color:var(--violet)}
 
 /* Today tiles */
-.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.stats{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,2fr);gap:14px}
+.fstat{display:flex;flex-direction:column;gap:10px;padding:14px 16px}
+.fstat .ftop{display:flex;align-items:center;gap:10px}
+.fstat .ftop b{font-family:var(--f-round);font-size:28px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums;letter-spacing:-.02em;margin-left:auto}
+.fstat .ftop b small{font-size:15px;color:var(--muted);font-weight:600;margin-left:4px}
+.fstat .fbar{height:6px;border-radius:99px;background:var(--fill);overflow:hidden}
+.fstat .fbar i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--dawn),var(--focus));transition:width .6s}
+.fstat .fmeta{display:flex;align-items:center;gap:10px;justify-content:space-between;flex-wrap:wrap}
+.fstat .fmeta span{font-size:14px;color:var(--muted);font-weight:600}
+.fstat .fbtn{padding:7px 14px;font-size:13.5px}
+.fstat.on{box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--focus) 55%,transparent)}
+.fstat.on .ic{background:var(--focus)!important;animation:fpulse 2s ease-in-out infinite}
+@keyframes fpulse{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--focus) 45%,transparent)}50%{box-shadow:0 0 0 7px transparent}}
+.fstat .ftask{font-size:13px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:-4px}
 .stat{padding:14px 16px;display:grid;grid-template-columns:auto 1fr;column-gap:10px;row-gap:8px;align-items:center}
 .stat .ic{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.4)}
 .stat .ic svg{width:18px;height:18px}
@@ -638,6 +651,7 @@ body.locked{overflow:hidden}
   .page-head h1{font-size:32px}
   .board,.grid2,.plans{grid-template-columns:minmax(0,1fr)}
   .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .fstat{grid-column:1/-1}
   .page-head .btn.primary{display:none}
   .toast{top:calc(70px + env(safe-area-inset-top,0px))}
   .kbd-row{display:none}
@@ -964,6 +978,7 @@ body.locked{overflow:hidden}
                 <li><label for="sTone">Ton du brief</label><select id="sTone"><option value="direct">Direct et concis</option><option value="coach">Coach motivant</option><option value="detail">Détaillé</option></select></li>
                 <li><label for="sTmr">Aperçu de demain</label><input type="checkbox" class="switch" id="sTmr" checked></li>
                 <li><label for="sFocus">Proposer des créneaux de focus</label><input type="checkbox" class="switch" id="sFocus" checked></li>
+                <li><label for="sFocusGoal">Objectif de focus par jour</label><select id="sFocusGoal"><option value="60">1 h</option><option value="120">2 h</option><option value="180">3 h</option><option value="240">4 h</option><option value="300">5 h</option><option value="360">6 h</option><option value="420">7 h</option><option value="480">8 h</option></select></li>
                 <li><label for="sRoll">Reporter les tâches non faites au lendemain</label><input type="checkbox" class="switch" id="sRoll" checked></li>
                 <li><label for="sMsPush">Ajouter dans Outlook les rendez-vous dictés</label><input type="checkbox" class="switch" id="sMsPush" checked></li>
                 <li><label for="sTrip">Calculer le trajet des nouveaux rendez-vous</label><input type="checkbox" class="switch" id="sTrip" checked></li>
@@ -1151,6 +1166,7 @@ function eventsFor(date){
   const idx = (date.getDay()+6)%7, d = iso(date);
   const evs = (store.mode === "demo" ? WEEK_TPL[idx] : []).map((e,i) => ({id:d+"-"+i, title:e[0], start:toMin(e[1]), end:toMin(e[2]), acc:e[3], where:e[4], place:e[5]||null}));
   blocks.filter(b => b.date === d).forEach(b => evs.push({id:b.id, title:b.title, start:b.start, end:b.end, acc:"focus", where:"Créneau de focus"}));
+  if (typeof focusEvents === "function") focusEvents(d).forEach(x => evs.push(x));
   store.events.filter(e => e.date === d).forEach(e => evs.push({id:e.id, title:e.title, start:e.start, end:e.end, acc:e.acc === "perso" ? "perso" : e.acc === "focus" ? "focus" : "pro", where:e.where || "", user:true, tbc:!!e.tbc, src:e.src||"assistant", place:e.place||null, travel:e.travel||null}));
   msEventsOn(d).forEach(e => evs.push(e));
   return evs.sort((a,b) => a.start-b.start);
@@ -1227,9 +1243,7 @@ function renderToday(){
   $("#stats").innerHTML = [
     [real.length, "Rendez-vous", "i-cal", "var(--danger)"],
     [todo.length, "À faire", "i-check", "var(--accent)"],
-    [durTxt(freeTot), "Temps libre", "i-clock", "var(--focus)"],
-    [best ? fmtT(best[0]) : "—", best ? "Focus · "+durTxt(best[1]-best[0]) : "Pas de créneau", "i-bolt", "var(--dawn)"]
-  ].map(s => `<div class="card stat"><span class="ic" style="background:${s[3]}"><svg><use href="#${s[2]}"/></svg></span><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div>`).join("");
+  ].map(s => `<div class="card stat"><span class="ic" style="background:${s[3]}"><svg><use href="#${s[2]}"/></svg></span><b>${esc(s[0])}</b><span>${esc(s[1])}</span></div>`).join("") + focusCard();
   renderTimeline($("#timeline"), evs, true);
   const tmr = addDays(TODAY,1);
   $("#tmrTitle").textContent = "Demain · " + longDate(tmr);
@@ -2462,12 +2476,12 @@ function makeAI(){
 }
 function resetStore(){
   unsubs.forEach(u => { try { u(); } catch(e){} }); unsubs = [];
-  Object.assign(store, {mode:"loading", tasks:[], events:[], places:[], sessions:[], steps:[], goals:[], cols:{}});
+  Object.assign(store, {mode:"loading", tasks:[], events:[], places:[], sessions:[], steps:[], goals:[], focus:[], cols:{}});
   rolled = false; aiBrief = null; sampleFn = null; msReset();
 }
 function demoMode(){
   resetStore(); inDemo = true;
-  store.mode = "demo"; store.tasks = DEMO_TASKS.map(t=>({...t})); store.places = DEMO_PLACES.map(x=>({...x})); store.sessions = DEMO_SESSIONS(); store.steps = DEMO_STEPS(); store.goals = DEMO_GOALS();
+  store.mode = "demo"; store.tasks = DEMO_TASKS.map(t=>({...t})); store.places = DEMO_PLACES.map(x=>({...x})); store.sessions = DEMO_SESSIONS(); store.steps = DEMO_STEPS(); store.goals = DEMO_GOALS(); store.focus = [];
   $("#demoPill").hidden = false; $("#briefAi").hidden = true;
   renderAccount(); renderAll(); rollover();
 }
@@ -2475,7 +2489,7 @@ function startCloud(user){
   resetStore(); inDemo = false; currentUser = user;
   $("#demoPill").hidden = true;
   const root = fsdb.collection("users").doc(user.uid);
-  const C = {tasks:"tasks", events:"events", places:"places", sessions:"gym", steps:"steps", goals:"goals"};
+  const C = {tasks:"tasks", events:"events", places:"places", sessions:"gym", steps:"steps", goals:"goals", focus:"focus"};
   Object.entries(C).forEach(([k, c]) => { store.cols[k] = root.collection(c); });
   Object.keys(C).forEach(k => unsubs.push(store.cols[k].onSnapshot(snap => {
     store[k] = snap.docs.map(d => ({id:d.id, ...d.data()}));
@@ -2569,7 +2583,7 @@ $("#aDemo").addEventListener("click", () => { showAuth(false); demoMode(); });
 
 async function exportData(){
   const data = {application:"Aube", exporteLe:new Date().toISOString(), compte:currentUser ? currentUser.email : null};
-  ["tasks","events","places","sessions","steps","goals"].forEach(k => data[k] = store[k]);
+  ["tasks","events","places","sessions","steps","goals","focus"].forEach(k => data[k] = store[k] || []);
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:"application/json"}));
   const a = document.createElement("a"); a.href = url; a.download = `aube-${TODAY_ISO}.json`; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
@@ -2578,7 +2592,7 @@ async function deleteAccount(btn){
   if (!btn.dataset.confirm){ btn.dataset.confirm = "1"; btn.textContent = "Confirmer la suppression"; setTimeout(() => { if (btn.isConnected){ delete btn.dataset.confirm; btn.textContent = "Supprimer"; } }, 4000); return; }
   btn.disabled = true; btn.textContent = "Suppression…";
   try {
-    for (const k of ["tasks","events","places","sessions","steps","goals"]) for (const d of store[k].slice()) await store.cols[k].doc(d.id).delete();
+    for (const k of ["tasks","events","places","sessions","steps","goals","focus"]) for (const d of (store[k] || []).slice()) await store.cols[k].doc(d.id).delete();
     await currentUser.delete();
     toast("Compte et données supprimés.");
     setTimeout(logoutClean, 1200);
@@ -2589,7 +2603,7 @@ async function deleteAccount(btn){
 }
 // Déconnexion : efface aussi la copie locale des données (important sur un ordinateur partagé).
 async function logoutClean(){
-  ["aiBrief","blocks","name","geo","geo2","tripMode","iphKey","iphOn","msCache","notif","reviewSeen"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
+  ["aiBrief","blocks","name","geo","geo2","tripMode","iphKey","iphOn","msCache","notif","reviewSeen","focusGoal"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
   resetStore();
   try { await fbAuth.signOut(); } catch(e){}
   try { await fsdb.terminate(); await fsdb.clearPersistence(); } catch(e){}
@@ -3024,7 +3038,7 @@ function weekReview(mon){
     var v = stepsOn(iso(d)); if (v != null) steps.push(v);
   }
   var sg = stepGoal(), gym = weekStats(mon), goals = store.goals.map(g => { var r = goalValue(g); return {title:g.title, pct:Math.min(100, Math.round(r.v / (r.t || 1) * 100))}; });
-  return {a, b, done, slipped, evN, evMin, stepsAvg:steps.length ? Math.round(steps.reduce((x, y) => x + y, 0) / steps.length) : null, stepsMet:steps.filter(x => x >= sg).length, stepDays:steps.length, gym:gym.count, gymMin:gym.minutes, gymGoal:gymGoal(), goals};
+  return {a, b, focusMin:focusRange(a, b), done, slipped, evN, evMin, stepsAvg:steps.length ? Math.round(steps.reduce((x, y) => x + y, 0) / steps.length) : null, stepsMet:steps.filter(x => x >= sg).length, stepDays:steps.length, gym:gym.count, gymMin:gym.minutes, gymGoal:gymGoal(), goals};
 }
 function reviewMon(){ var dow = TODAY.getDay(); return dow === 1 && nowMin() < 12 * 60 ? addDays(MONDAY0, -7) : MONDAY0; }
 function openReview(mon){
@@ -3039,6 +3053,7 @@ function openReview(mon){
       <div class="rv-kpi"><b>${r.done.length}</b><span>tâche${r.done.length > 1 ? "s" : ""} faite${r.done.length > 1 ? "s" : ""}</span></div>
       <div class="rv-kpi"><b>${r.slipped.length}</b><span>tâche${r.slipped.length > 1 ? "s" : ""} qui ${r.slipped.length > 1 ? "ont" : "a"} glissé</span></div>
       <div class="rv-kpi"><b>${r.evN}</b><span>rendez-vous · ${h} h${mm ? " " + pad(mm) : ""}</span></div>
+      <div class="rv-kpi"><b>${r.focusMin ? durTxt(r.focusMin) : "–"}</b><span>de focus</span></div>
       <div class="rv-kpi"><b>${r.gym}/${r.gymGoal}</b><span>séances de muscu${r.gymMin ? " · " + durTxt(r.gymMin) : ""}</span></div>
       <div class="rv-kpi"><b>${r.stepsAvg != null ? fmtNum(r.stepsAvg) : "–"}</b><span>pas par jour en moyenne</span></div>
       <div class="rv-kpi"><b>${r.stepsMet}/7</b><span>jours à l'objectif de pas</span></div>
@@ -3150,6 +3165,68 @@ document.addEventListener("keydown", ev => {
   if (ev.key === "Escape"){ ["#srchSheet", "#planSheet", "#reviewSheet"].forEach(s => { $(s).hidden = true; }); }
 });
 renderNotif(); renderReviewSlot();
+
+/* ---------- Temps de focus ---------- */
+var FOCUS_CAP = 6 * 60;
+function focusList(){ return (store.focus || []).filter(f => f && f.date); }
+function focusActive(){ return focusList().find(f => f.active) || null; }
+function focusEndOf(f){
+  if (!f.active) return f.end;
+  var mins = Math.floor((Date.now() - Date.parse(f.startAt)) / 60000);
+  return Math.min(f.start + Math.min(mins, FOCUS_CAP), 24 * 60);
+}
+function focusMinOn(dIso){ return focusList().filter(f => f.date === dIso).reduce((s, f) => s + Math.max(0, focusEndOf(f) - f.start), 0); }
+function focusRange(a, b){ return focusList().filter(f => f.date >= a && f.date <= b).reduce((s, f) => s + Math.max(0, focusEndOf(f) - f.start), 0); }
+function focusGoalMin(){ return +ls.get("focusGoal", 240) || 240; }
+function focusEvents(d){
+  return focusList().filter(f => f.date === d).map(f => { var en = focusEndOf(f); return {id:"fx" + f.id, title:(f.active ? "Focus en cours" : "Focus") + (f.task ? " · " + f.task : ""), start:f.start, end:Math.max(en, f.start + 1), acc:"focus", where:"", done:true}; })
+    .filter(x => x.end - x.start >= (x.title.indexOf("en cours") === 0 ? 1 : 5));
+}
+function focusTaskGuess(){
+  try { var t = sortTasks(store.tasks.filter(isToday)).find(x => !x.done); return t ? t.title.slice(0, 80) : ""; } catch(e){ return ""; }
+}
+function focusCard(){
+  var a = focusActive(), done = focusMinOn(TODAY_ISO), goal = focusGoalMin(), pct = Math.min(100, Math.round(done / goal * 100));
+  var week = focusRange(iso(MONDAY0), iso(addDays(MONDAY0, 6)));
+  var big = done >= 60 ? `${Math.floor(done / 60)}<small>h</small>${done % 60 ? " " + pad(done % 60) : ""}` : `${done}<small>min</small>`;
+  var meta = a ? `En focus depuis <span class="js-ftimer">${fmtElapsed(Date.now() - Date.parse(a.startAt))}</span>`
+    : done >= goal ? `Objectif atteint · ${durTxt(goal)} 🎯` : `Focus aujourd'hui · objectif ${durTxt(goal)}`;
+  return `<div class="card fstat${a ? " on" : ""}">
+    <div class="ftop"><span class="ic" style="width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--dawn)"><svg style="width:18px;height:18px"><use href="#i-bolt"/></svg></span><b>${big}</b></div>
+    ${a && a.task ? `<div class="ftask">Sur : ${esc(a.task)}</div>` : ""}
+    <div class="fbar" title="${pct} % de ton objectif"><i style="width:${pct}%"></i></div>
+    <div class="fmeta"><span>${meta}${week > done ? ` · semaine ${durTxt(week)}` : ""}</span>
+      <button class="btn ${a ? "" : "primary "}fbtn" type="button" data-focus="${a ? "stop" : "start"}">${a ? "Pause" : "Je bosse"}</button></div>
+  </div>`;
+}
+async function focusStart(){
+  if (store.mode === "loading") return;
+  if (focusActive()) return;
+  var d = new Date(), f = {id:newId("f"), date:TODAY_ISO, start:d.getHours() * 60 + d.getMinutes(), startAt:d.toISOString(), end:null, active:true, task:focusTaskGuess(), createdAt:d.toISOString()};
+  try { await put("focus", f); toast("C'est parti. Le temps de focus est compté."); } catch(e){ dbErr(e); }
+}
+async function focusStop(silent){
+  var a = focusActive(); if (!a) return;
+  var en = focusEndOf(a), mins = en - a.start;
+  try {
+    if (mins < 2) await drop("focus", a.id);
+    else await put("focus", {...a, active:false, end:en});
+    if (!silent) toast(mins < 2 ? "Session trop courte, non comptée." : `${durTxt(mins)} de focus ajoutées.`);
+  } catch(e){ dbErr(e); }
+}
+function focusTick(){
+  var a = focusActive(); if (!a) return;
+  var el = document.querySelectorAll(".js-ftimer"); el.forEach(x => x.textContent = fmtElapsed(Date.now() - Date.parse(a.startAt)));
+  if (a.date !== TODAY_ISO || Date.now() - Date.parse(a.startAt) > FOCUS_CAP * 60000) focusStop(true);
+}
+setInterval(focusTick, 1000);
+setInterval(() => { if (focusActive() && !$("#v-today").hidden) renderToday(); }, 60000);
+document.addEventListener("click", ev => {
+  var b = ev.target.closest("[data-focus]"); if (!b) return;
+  if (b.dataset.focus === "start") focusStart(); else focusStop();
+});
+$("#sFocusGoal").value = String(focusGoalMin());
+$("#sFocusGoal").addEventListener("change", e => { ls.set("focusGoal", +e.target.value); renderAll(); });
 })();
 </script>
 </body>
