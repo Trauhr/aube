@@ -265,6 +265,20 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .evs-trip[hidden]{display:none}
 .evs-from{font-size:14px;display:flex;flex-direction:column;gap:1px}
 .evs-from small{color:var(--muted);font-size:12px}
+.ac-wrap{position:relative;min-width:0}
+.ac-list{position:fixed;z-index:400;list-style:none;margin:0;padding:6px;border-radius:16px;background:linear-gradient(var(--glass-strong),var(--glass-strong)),var(--bg);box-shadow:0 14px 40px rgba(0,0,0,.18),0 0 0 1px var(--line);max-height:300px;overflow-y:auto}
+.ac-list[hidden]{display:none}
+.ac-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:11px;cursor:pointer;min-width:0}
+.ac-list li.on,.ac-list li:hover{background:var(--fill)}
+.ac-list .ac-ic{width:28px;height:28px;border-radius:50%;flex:none;display:grid;place-items:center;background:var(--fill);color:var(--muted)}
+.ac-list .ac-ic svg{width:15px;height:15px}
+.ac-list li.saved .ac-ic{background:color-mix(in srgb,var(--accent) 16%,transparent);color:var(--accent)}
+.ac-list li.poi .ac-ic{background:color-mix(in srgb,var(--dawn) 18%,transparent);color:var(--dawn)}
+.ac-list .ac-t{min-width:0;display:flex;flex-direction:column;line-height:1.25}
+.ac-list .ac-t b{font-weight:600;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-list .ac-t small{color:var(--muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-list .ac-foot{cursor:default;font-size:11px;color:var(--muted);padding:4px 10px 2px;justify-content:flex-end}
+.ac-list .ac-foot:hover{background:none}
 .evs-in{border:0;background:var(--glass-strong);border-radius:12px;padding:9px 12px;width:100%;font-size:15px}
 .evs-res{font-size:15px;font-weight:600;min-height:20px}
 .evs-res small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:2px}
@@ -697,6 +711,8 @@ body.locked{overflow:hidden}
   <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></symbol>
   <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></symbol>
   <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7M6.5 9.5V20h11V9.5M10 20v-5h4v5"/></symbol>
+  <symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V5.5A1.5 1.5 0 0 1 6.5 4h7A1.5 1.5 0 0 1 15 5.5V20M15 10h3.5a1.5 1.5 0 0 1 1.5 1.5V20M3.5 20h17M8.5 8h3M8.5 12h3M8.5 16h3"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
 
   <symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16v-3.6l1.8-4.7A2 2 0 0 1 8.2 6.4h7.6a2 2 0 0 1 1.9 1.3l1.8 4.7V16a1 1 0 0 1-1 1h-14a1 1 0 0 1-1-1ZM4.8 12.2h14.4M7 17v1.8M17 17v1.8"/><circle cx="8" cy="14.5" r=".6" fill="currentColor"/><circle cx="16" cy="14.5" r=".6" fill="currentColor"/></symbol>
@@ -1909,6 +1925,76 @@ async function geocode(q, near){
   if (pt){ geoCache[k] = pt; const ks = Object.keys(geoCache); if (ks.length > 150) delete geoCache[ks[0]]; ls.set("geo2", geoCache); }
   return pt;
 }
+/* ---------- Suggestions d'adresses (Base Adresse Nationale + lieux connus OpenStreetMap) ---------- */
+function acPoiLabel(p){
+  const street = p.street ? (p.housenumber ? p.housenumber + " " : "") + p.street : "";
+  const city = [p.postcode, p.city || (p.type === "city" ? "" : p.county)].filter(Boolean).join(" ");
+  return {title:p.name || street || city, sub:[p.name && street ? street : "", city].filter(Boolean).join(", "), label:[p.name, street, city].filter(Boolean).filter((x,i,a) => a.indexOf(x) === i).join(", ")};
+}
+async function acFetch(q){
+  const h = typeof home === "function" ? home() : null, hp = h && h.address ? geoCache[h.address.toLowerCase()] : null;
+  const bias = hp ? `&lat=${hp.lat}&lon=${hp.lon}` : "&lat=48.857&lon=2.352";
+  const ql = q.toLowerCase(), out = [], seen = new Set();
+  const add = it => { const k = it.label.toLowerCase(); if (!it.label || seen.has(k)) return; seen.add(k); out.push(it); };
+  (store.places || []).filter(pl => pl.address && ((pl.name || "").toLowerCase().includes(ql) || pl.address.toLowerCase().includes(ql)))
+    .slice(0, 3).forEach(pl => add({kind:"saved", title:pl.name, sub:pl.address, label:pl.address}));
+  const [ban, pho] = await Promise.all([
+    getJSON("https://api-adresse.data.gouv.fr/search/?autocomplete=1&limit=5&q=" + encodeURIComponent(q) + bias).catch(() => null),
+    getJSON("https://photon.komoot.io/api/?limit=6&lang=fr&q=" + encodeURIComponent(q) + bias).catch(() => null)
+  ]);
+  const banIt = ((ban && ban.features) || []).filter(f => f.properties.score >= 0.3).map(f => { const p = f.properties; return {kind:"addr", title:p.name, sub:[p.postcode, p.city].filter(Boolean).join(" ") + (p.context ? " · " + p.context.split(", ").slice(-1)[0] : ""), label:p.label, lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0], score:p.score}; });
+  const poiIt = ((pho && pho.features) || []).filter(f => f.properties.name && f.properties.osm_key !== "highway" && f.properties.osm_key !== "place" && f.properties.osm_key !== "boundary")
+    .map(f => { const l = acPoiLabel(f.properties); return {kind:"poi", title:l.title, sub:l.sub, label:l.label, lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0]}; });
+  // un nom de lieu (« Basic-Fit », « ESILV ») : les lieux connus d'abord ; une adresse (chiffre en tête) : la BAN d'abord
+  const looksAddr = /^\s*\d/.test(q) || /\b(rue|avenue|av\.?|bd|boulevard|all[ée]e|place|chemin|quai|impasse|route)\b/i.test(q);
+  (looksAddr ? [banIt, poiIt] : [poiIt.slice(0, 3), banIt, poiIt.slice(3)]).forEach(list => list.forEach(add));
+  return out.slice(0, 7);
+}
+function addrSuggest(input){
+  if (!input || input.dataset.ac) return; input.dataset.ac = "1";
+  input.setAttribute("autocomplete", "off"); input.setAttribute("role", "combobox"); input.setAttribute("aria-autocomplete", "list"); input.setAttribute("aria-expanded", "false");
+  const wrap = document.createElement("div"); wrap.className = "ac-wrap"; input.parentNode.insertBefore(wrap, input); wrap.appendChild(input);
+  const list = document.createElement("ul"); list.className = "ac-list"; list.hidden = true; list.setAttribute("role", "listbox"); list.id = input.id + "Ac"; document.body.appendChild(list);
+  input.setAttribute("aria-controls", list.id);
+  let items = [], sel = -1, seq = 0, timer = null, picked = "";
+  const close = () => { list.hidden = true; sel = -1; input.setAttribute("aria-expanded", "false"); };
+  const ico = k => k === "saved" ? "i-home" : k === "poi" ? "i-building" : "i-pin";
+  const draw = () => {
+    if (!items.length){ close(); return; }
+    list.innerHTML = items.map((it, i) => `<li role="option" data-i="${i}" class="${it.kind}${i === sel ? " on" : ""}" aria-selected="${i === sel}"><span class="ac-ic"><svg><use href="#${ico(it.kind)}"/></svg></span><span class="ac-t"><b>${esc(it.title)}</b>${it.sub ? `<small>${esc(it.sub)}</small>` : ""}</span></li>`).join("") + `<li class="ac-foot" aria-hidden="true">Adresses : BAN · lieux : OpenStreetMap</li>`;
+    list.hidden = false; input.setAttribute("aria-expanded", "true"); place();
+  };
+  const place = () => {
+    const r = input.getBoundingClientRect(), below = innerHeight - r.bottom - 12, above = r.top - 12;
+    const up = below < 220 && above > below, max = Math.max(140, Math.min(300, up ? above : below));
+    Object.assign(list.style, {left:r.left + "px", width:r.width + "px", maxHeight:max + "px", top:up ? "" : (r.bottom + 6) + "px", bottom:up ? (innerHeight - r.top + 6) + "px" : ""});
+  };
+  window.addEventListener("scroll", ev => { if (!list.hidden && !list.contains(ev.target)) place(); }, true);
+  window.addEventListener("resize", () => { if (!list.hidden) place(); });
+  const pick = i => {
+    const it = items[i]; if (!it) return;
+    input.value = it.label.slice(0, +(input.getAttribute("maxlength") || 160)); picked = input.value;
+    if (it.lat != null){ geoCache[input.value.toLowerCase()] = {lat:it.lat, lon:it.lon, label:it.label}; try { ls.set("geo2", geoCache); } catch(e){} }
+    close();
+    input.dispatchEvent(new Event("input", {bubbles:true})); input.dispatchEvent(new Event("change", {bubbles:true}));
+  };
+  input.addEventListener("input", ev => {
+    if (!ev.isTrusted) return;
+    const q = input.value.trim(); clearTimeout(timer);
+    if (q.length < 3 || q === picked){ items = []; close(); return; }
+    timer = setTimeout(async () => { const my = ++seq; const r = await acFetch(q).catch(() => []); if (my !== seq || document.activeElement !== input) return; items = r; sel = -1; draw(); }, 220);
+  });
+  input.addEventListener("keydown", ev => {
+    if (list.hidden) return;
+    if (ev.key === "ArrowDown"){ ev.preventDefault(); sel = (sel + 1) % items.length; draw(); }
+    else if (ev.key === "ArrowUp"){ ev.preventDefault(); sel = (sel - 1 + items.length) % items.length; draw(); }
+    else if (ev.key === "Enter" && sel >= 0){ ev.preventDefault(); pick(sel); }
+    else if (ev.key === "Escape"){ ev.stopPropagation(); close(); }
+  });
+  list.addEventListener("pointerdown", ev => { const li = ev.target.closest("[data-i]"); if (!li) return; ev.preventDefault(); pick(+li.dataset.i); });
+  input.addEventListener("blur", () => setTimeout(close, 120));
+}
+["#pAddr", "#evsWhere", "#evsHomeAddr"].forEach(s => addrSuggest(document.querySelector(s)));
 async function routeLeg(a, b, mode){
   const r = await getJSON(`https://routing.openstreetmap.de/routed-${OSRM[mode] || "car"}/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`);
   const rt = r && r.code === "Ok" && r.routes && r.routes[0]; if (!rt) throw new Error("route");
