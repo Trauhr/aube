@@ -1940,10 +1940,10 @@ async function acFetch(q){
     .slice(0, 3).forEach(pl => add({kind:"saved", title:pl.name, sub:pl.address, label:pl.address}));
   const [ban, pho] = await Promise.all([
     getJSON("https://api-adresse.data.gouv.fr/search/?autocomplete=1&limit=5&q=" + encodeURIComponent(q) + bias).catch(() => null),
-    getJSON("https://photon.komoot.io/api/?limit=6&lang=fr&q=" + encodeURIComponent(q) + bias).catch(() => null)
+    getJSON("https://photon.komoot.io/api/?limit=6&lang=fr&bbox=-5.5,41.2,9.8,51.3&q=" + encodeURIComponent(q) + bias).catch(() => null)
   ]);
   const banIt = ((ban && ban.features) || []).filter(f => f.properties.score >= 0.3).map(f => { const p = f.properties; return {kind:"addr", title:p.name, sub:[p.postcode, p.city].filter(Boolean).join(" ") + (p.context ? " · " + p.context.split(", ").slice(-1)[0] : ""), label:p.label, lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0], score:p.score}; });
-  const poiIt = ((pho && pho.features) || []).filter(f => f.properties.name && f.properties.osm_key !== "highway" && f.properties.osm_key !== "place" && f.properties.osm_key !== "boundary")
+  const poiIt = ((pho && pho.features) || []).filter(f => f.properties.name && !/^(highway|place|boundary|waterway|natural|landuse|railway)$/.test(f.properties.osm_key))
     .map(f => { const l = acPoiLabel(f.properties); return {kind:"poi", title:l.title, sub:l.sub, label:l.label, lat:f.geometry.coordinates[1], lon:f.geometry.coordinates[0]}; });
   // un nom de lieu (« Basic-Fit », « ESILV ») : les lieux connus d'abord ; une adresse (chiffre en tête) : la BAN d'abord
   const looksAddr = /^\s*\d/.test(q) || /\b(rue|avenue|av\.?|bd|boulevard|all[ée]e|place|chemin|quai|impasse|route)\b/i.test(q);
