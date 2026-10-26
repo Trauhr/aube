@@ -225,8 +225,21 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .wk-ev.short small{display:none}
 .wk-ev.user{cursor:pointer;z-index:1}
 .wk-ev.user:hover{filter:brightness(1.04)}
-.wk-trip{position:absolute;left:9px;right:7px;border-radius:6px;font-size:11px;line-height:1.25;padding:2px 6px;color:var(--muted);font-weight:500;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--muted) 13%,transparent) 0 4px,transparent 4px 8px);border:1px dashed color-mix(in srgb,var(--muted) 40%,transparent);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none}
+.wk-trip{position:absolute;left:3px;right:4px;border-radius:7px;font-size:11px;line-height:1.25;padding:2px 6px 2px 8px;color:var(--pro);font-weight:600;background:color-mix(in srgb,var(--pro) 8%,transparent);border-left:3px dotted color-mix(in srgb,var(--pro) 70%,transparent);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none;display:flex;align-items:flex-start;gap:4px}
+.wk-trip span{overflow:hidden;text-overflow:ellipsis}
+.wk-trip .ti{width:13px;height:13px;margin-top:0;flex:none}
+.wk-trip.perso{color:var(--perso);background:color-mix(in srgb,var(--perso) 8%,transparent);border-left-color:color-mix(in srgb,var(--perso) 70%,transparent)}
+.wk-trip.focus{color:var(--focus);background:color-mix(in srgb,var(--focus) 8%,transparent);border-left-color:color-mix(in srgb,var(--focus) 70%,transparent)}
+.ti{width:1.1em;height:1.1em;vertical-align:-.18em;flex:none;display:inline-block}
+.wk-ev small{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wk-ev small.wk-where{white-space:normal;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;word-break:break-word}
+.wk-where .ti{width:11px;height:11px;margin-right:3px;vertical-align:-1px}
+#evsModes{display:flex;width:100%}
+#evsModes button{flex:1 1 auto;padding:6px 9px;display:inline-flex;align-items:center;justify-content:center}
+#evsModes button .ti{width:15px;height:15px;margin-right:5px}
+.evs-res .ti{margin-right:6px;color:var(--accent)}
 .wk-trip.tiny{font-size:0;padding:0}
+.wk-trip.tiny .ti{display:none}
 .evs-back{position:fixed;inset:0;z-index:55;display:grid;place-items:center;padding:16px;background:rgba(8,12,24,.30);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .evs-back[hidden]{display:none}
 .evs{width:min(470px,100%);max-height:calc(100dvh - 32px);overflow:auto;border-radius:26px;display:flex;flex-direction:column;margin:0}
@@ -666,6 +679,11 @@ body.locked{overflow:hidden}
   <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></symbol>
   <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
+
+  <symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16v-3.6l1.8-4.7A2 2 0 0 1 8.2 6.4h7.6a2 2 0 0 1 1.9 1.3l1.8 4.7V16a1 1 0 0 1-1 1h-14a1 1 0 0 1-1-1ZM4.8 12.2h14.4M7 17v1.8M17 17v1.8"/><circle cx="8" cy="14.5" r=".6" fill="currentColor"/><circle cx="16" cy="14.5" r=".6" fill="currentColor"/></symbol>
+  <symbol id="i-tram" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="3.5" width="12" height="13.5" rx="3.2"/><path d="M6 10.5h12M9.5 17l-2 3.5M14.5 17l2 3.5"/><circle cx="9.3" cy="13.8" r=".6" fill="currentColor"/><circle cx="14.7" cy="13.8" r=".6" fill="currentColor"/></symbol>
+  <symbol id="i-bike" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.8" cy="15.5" r="3.6"/><circle cx="18.2" cy="15.5" r="3.6"/><path d="M5.8 15.5 9.6 9h5.6l3 6.5M9.6 9l2.6 6.5H5.8M15.2 9l-3 6.5M14.3 6.5h2.2M8.3 6.8h2.6"/></symbol>
+  <symbol id="i-walk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="13.2" cy="4.3" r="1.7" fill="currentColor" stroke="none"/><path d="m9.5 21 2.3-6.3 2.7 2.6V21M7.5 12.3l1.9-4.1 3.4-.7 2 3.6 2.7 1.1M11.8 14.7l1-7.2"/></symbol>
 </svg>
 
 <div class="wallpaper" aria-hidden="true"></div>
@@ -1284,13 +1302,13 @@ function renderWeek(){
     eventsFor(d).forEach(e => {
       const t = tripOf(e);
       if (t){
-        const blk = (a, b, label) => { a = clamp(a, H0*60, H1*60); b = clamp(b, H0*60, H1*60); if (b - a < 1) return; const hh = (b-a)/60*HH - 1; body += `<div class="wk-trip${hh < 13 ? " tiny" : ""}" style="top:${(a/60-H0)*HH}px;height:${hh}px" title="${label}">${label}</div>`; };
-        if (t.out && t.minOut) blk(e.start - t.minOut, e.start, `${TRIP_ICON[t.mode]||""} Aller · ${t.minOut} min`);
-        if (t.back && t.minBack) blk(e.end, e.end + t.minBack, `${TRIP_ICON[t.mode]||""} Retour · ${t.minBack} min`);
+        const blk = (a, b, label) => { a = clamp(a, H0*60, H1*60); b = clamp(b, H0*60, H1*60); if (b - a < 1) return; const hh = (b-a)/60*HH - 1; body += `<div class="wk-trip ${e.acc}${hh < 13 ? " tiny" : ""}" style="top:${(a/60-H0)*HH}px;height:${hh}px" title="${label} ${MODES[t.mode]||""}">${tripIco(t.mode)}<span>${label}</span></div>`; };
+        if (t.out && t.minOut) blk(e.start - t.minOut, e.start, `Aller · ${t.minOut} min`);
+        if (t.back && t.minBack) blk(e.end, e.end + t.minBack, `Retour · ${t.minBack} min`);
       }
       const s = clamp(e.start, H0*60, H1*60), en = clamp(e.end, H0*60, H1*60); if (en <= s) return;
       const top = (s/60-H0)*HH, h = Math.max(22,(en-s)/60*HH-2);
-      body += `<div class="wk-ev ${e.acc}${h<40?" short":""}${e.user?" user":""}${e.id===flashId?" flash":""}"${e.user?` data-eid="${esc(e.id)}" role="button" tabindex="0"`:""} style="top:${top}px;height:${h}px" title="${esc(e.title)} · ${fmtT(e.start)}–${fmtT(e.end)}${e.user?" · touche pour modifier":""}"><b>${esc(e.title)}</b><small>${fmtT(e.start)}–${fmtT(e.end)}${e.tbc?" · à confirmer":""}</small></div>`;
+      body += `<div class="wk-ev ${e.acc}${h<40?" short":""}${e.user?" user":""}${e.id===flashId?" flash":""}"${e.user?` data-eid="${esc(e.id)}" role="button" tabindex="0"`:""} style="top:${top}px;height:${h}px" title="${esc(e.title)} · ${fmtT(e.start)}–${fmtT(e.end)}${e.where?" · "+esc(e.where):""}${e.user?" · touche pour modifier":""}"><b>${esc(e.title)}</b><small>${fmtT(e.start)}–${fmtT(e.end)}${e.tbc?" · à confirmer":""}</small>${e.where?`<small class="wk-where"><svg class="ti" aria-hidden="true"><use href="#i-pin"/></svg>${esc(isVisio(e.where)||/^https?:/i.test(e.where)?"Visio":e.where.split(",")[0])}</small>`:""}</div>`;
     });
     if (td){ const n = nowMin(); if (n/60 > H0 && n/60 < H1) body += `<div class="wk-now" style="top:${(n/60-H0)*HH}px"></div>`; }
     body += `</div>`;
@@ -1763,7 +1781,8 @@ $("#placeForm").addEventListener("submit", async ev => {
 
 /* ---------- Trajet d'un rendez-vous (aller / retour, comme Calendrier) ---------- */
 const TRIP_MODES = [["","Aucun"],["voiture","Voiture"],["transports","Transports"],["velo","Vélo"],["pied","À pied"]];
-const TRIP_ICON = {voiture:"🚗", transports:"🚇", velo:"🚲", pied:"🚶"};
+const TRIP_SYM = {voiture:"i-car", transports:"i-tram", velo:"i-bike", pied:"i-walk"};
+function tripIco(m){ return TRIP_SYM[m] ? `<svg class="ti" aria-hidden="true"><use href="#${TRIP_SYM[m]}"/></svg>` : ""; }
 const OSRM = {voiture:"car", transports:"car", velo:"bike", pied:"foot"};
 const isVisio = w => /teams|zoom|meet|t[ée]l[ée]phone|visio|en ligne|appel/i.test(w || "");
 const tripOf = e => e && e.travel && e.travel.mode && (e.travel.minOut || e.travel.minBack) ? e.travel : null;
@@ -1840,7 +1859,7 @@ function closeEvSheet(){ $("#evSheet").hidden = true; evs = null; tripSeq++; }
 function tripFrom(){ const h = home(); return h && h.address ? h.address : $("#evsHomeAddr").value.trim(); }
 function renderEvs(){
   if (!evs) return;
-  $("#evsModes").innerHTML = TRIP_MODES.map(([k, l]) => `<button type="button" data-tmode="${k}" aria-pressed="${evs.mode === k}">${k ? TRIP_ICON[k] + " " : ""}${l}</button>`).join("");
+  $("#evsModes").innerHTML = TRIP_MODES.map(([k, l]) => `<button type="button" data-tmode="${k}" aria-pressed="${evs.mode === k}">${tripIco(k)}${l}</button>`).join("");
   $("#evsTrip").hidden = !evs.mode;
   if (!evs.mode) return;
   const h = home(), hasHome = !!(h && h.address);
@@ -1853,7 +1872,7 @@ function renderEvs(){
   if (evs.msg) res.innerHTML = esc(evs.msg);
   else if (evs.minOut || evs.minBack){
     const note = evs.manual ? "durée saisie à la main" : evs.est ? "estimation, sans les horaires en temps réel des transports" : evs.mode === "voiture" ? "calculé hors trafic" : "itinéraire calculé";
-    res.innerHTML = `${TRIP_ICON[evs.mode]} ${evs.minOut || "–"} min à l'aller · ${evs.minBack || "–"} min au retour<small>${evs.km ? String(evs.km).replace(".", ",") + " km · " : ""}${note}${evs.fromLbl && !evs.manual ? "<br>départ : " + esc(evs.fromLbl) : ""}${evs.to && !evs.manual ? "<br>arrivée : " + esc(evs.to) : ""}</small>`;
+    res.innerHTML = `${tripIco(evs.mode)}${evs.minOut || "–"} min à l'aller · ${evs.minBack || "–"} min au retour<small>${evs.km ? String(evs.km).replace(".", ",") + " km · " : ""}${note}${evs.fromLbl && !evs.manual ? "<br>départ : " + esc(evs.fromLbl) : ""}${evs.to && !evs.manual ? "<br>arrivée : " + esc(evs.to) : ""}</small>`;
   } else res.textContent = "";
   const to = $("#evsWhere").value.trim(), from = tripFrom();
   const map = $("#evsMap"); map.hidden = !to;
