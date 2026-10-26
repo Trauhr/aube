@@ -243,7 +243,10 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .evs-line > span:first-child small{display:block;color:var(--muted);font-size:12px}
 .evs-ctl{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;white-space:nowrap}
 .evs-min{width:64px;border:0;background:var(--glass-strong);border-radius:10px;padding:6px 8px;text-align:right;font-size:15px;color:var(--ink)}
-.evs footer{display:flex;align-items:center;gap:8px;padding:12px 20px 18px;border-top:1px solid var(--line)}
+.evs footer{display:flex;align-items:center;gap:8px;padding:12px 20px 18px;border-top:1px solid var(--line);position:sticky;bottom:0;z-index:2;background:linear-gradient(var(--glass-strong),var(--glass-strong)),var(--bg)}
+.evs.glass{background:linear-gradient(var(--glass-strong),var(--glass-strong)),var(--bg)}
+.evs header{position:sticky;top:0;z-index:2;background:linear-gradient(var(--glass-strong),var(--glass-strong)),var(--bg)}
+body:has(.evs-back:not([hidden])) .assist,body:has(.evs-back:not([hidden])) .tabbar{opacity:0;pointer-events:none}
 .evs footer .sp{flex:1}
 .evs .danger{color:var(--danger)}
 .assist-bar .mic{border:0;background:none;width:38px;height:38px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--muted);transition:background .2s,color .2s}
@@ -1765,11 +1768,13 @@ function tripPlace(e){
   const t = tripOf(e); if (!t || !t.out || !t.minOut) return null;
   return {name:e.where || e.title, address:e.where || "", minutes:t.minOut, mode:t.mode};
 }
-const geoCache = (() => { const g = ls.get("geo", {}); return g && typeof g === "object" ? g : {}; })();
+const geoCache = (() => { try { localStorage.removeItem("aube.geo"); } catch(e){} const g = ls.get("geo2", {}); return g && typeof g === "object" ? g : {}; })();
+const geoPrecise = q => /\b\d{5}\b/.test(q) || /,\s*\S{2,}/.test(q);
+const geoKm = (a, b) => { const r = Math.PI / 180, x = (b.lon - a.lon) * r * Math.cos((a.lat + b.lat) * r / 2), y = (b.lat - a.lat) * r; return Math.sqrt(x * x + y * y) * 6371; };
 async function getJSON(u){ const r = await fetch(u); if (!r.ok) throw new Error("http"); return r.json(); }
 async function geocode(q, near){
   q = (q || "").trim(); if (q.length < 3) return null;
-  const k = q.toLowerCase(); if (geoCache[k]) return geoCache[k];
+  const k = q.toLowerCase() + (near ? "@" + near.lat.toFixed(1) + "," + near.lon.toFixed(1) : ""); if (geoCache[k]) return geoCache[k];
   let pt = null;
   try {
     const r = await getJSON("https://api-adresse.data.gouv.fr/search/?limit=1&q=" + encodeURIComponent(q) + (near ? `&lat=${near.lat}&lon=${near.lon}` : ""));
@@ -1783,7 +1788,7 @@ async function geocode(q, near){
       if (f){ const p = f.properties; pt = {lon:f.geometry.coordinates[0], lat:f.geometry.coordinates[1], label:[p.name, p.street && (p.housenumber ? p.housenumber + " " : "") + p.street, p.city].filter(Boolean).filter((x,i,a) => a.indexOf(x) === i).join(", ")}; }
     } catch(e){}
   }
-  if (pt){ geoCache[k] = pt; const ks = Object.keys(geoCache); if (ks.length > 150) delete geoCache[ks[0]]; ls.set("geo", geoCache); }
+  if (pt){ geoCache[k] = pt; const ks = Object.keys(geoCache); if (ks.length > 150) delete geoCache[ks[0]]; ls.set("geo2", geoCache); }
   return pt;
 }
 async function routeLeg(a, b, mode){
@@ -1794,11 +1799,16 @@ async function routeLeg(a, b, mode){
   return {min:Math.max(1, Math.round(rt.duration / 60)), km};
 }
 async function computeTrip(from, to, mode){
-  const a = await geocode(from); if (!a) throw new Error("from");
-  const b = await geocode(to, a); if (!b) throw new Error("to");
+  let [a, b] = await Promise.all([geocode(from), geocode(to)]);
+  if (!a) throw new Error("from"); if (!b) throw new Error("to");
+  if (geoKm(a, b) > 80){
+    if (!geoPrecise(from)) a = (await geocode(from, b)) || a;
+    else if (!geoPrecise(to)) b = (await geocode(to, a)) || b;
+    if (geoKm(a, b) > 150 && (!geoPrecise(from) || !geoPrecise(to))) throw new Error(!geoPrecise(from) ? "ambigfrom" : "ambigto");
+  }
   const [go, back] = await Promise.all([routeLeg(a, b, mode), routeLeg(b, a, mode)]);
   if (go.km > 1500) throw new Error("far");
-  return {minOut:go.min, minBack:back.min, km:Math.round(go.km * 10) / 10, est:mode === "transports", to:b.label || to};
+  return {minOut:go.min, minBack:back.min, km:Math.round(go.km * 10) / 10, est:mode === "transports", to:b.label || to, fromLbl:a.label || from};
 }
 const defaultTripMode = () => { const m = ls.get("tripMode", ""); if (OSRM[m]) return m; const h = home(); return h && OSRM[h.mode] ? h.mode : "voiture"; };
 async function autoTrip(id, fallback){
@@ -1840,7 +1850,7 @@ function renderEvs(){
   if (evs.msg) res.innerHTML = esc(evs.msg);
   else if (evs.minOut || evs.minBack){
     const note = evs.manual ? "durée saisie à la main" : evs.est ? "estimation, sans les horaires en temps réel des transports" : evs.mode === "voiture" ? "calculé hors trafic" : "itinéraire calculé";
-    res.innerHTML = `${TRIP_ICON[evs.mode]} ${evs.minOut || "–"} min à l'aller · ${evs.minBack || "–"} min au retour<small>${evs.km ? String(evs.km).replace(".", ",") + " km · " : ""}${note}${evs.to && !evs.manual ? " · arrivée : " + esc(evs.to) : ""}</small>`;
+    res.innerHTML = `${TRIP_ICON[evs.mode]} ${evs.minOut || "–"} min à l'aller · ${evs.minBack || "–"} min au retour<small>${evs.km ? String(evs.km).replace(".", ",") + " km · " : ""}${note}${evs.fromLbl && !evs.manual ? "<br>départ : " + esc(evs.fromLbl) : ""}${evs.to && !evs.manual ? "<br>arrivée : " + esc(evs.to) : ""}</small>`;
   } else res.textContent = "";
   const to = $("#evsWhere").value.trim(), from = tripFrom();
   const map = $("#evsMap"); map.hidden = !to;
@@ -1857,10 +1867,10 @@ async function runTrip(force){
   try {
     const r = await computeTrip(from, to, evs.mode);
     if (!evs || my !== tripSeq) return;
-    Object.assign(evs, {minOut:r.minOut, minBack:r.minBack, km:r.km, est:r.est, to:r.to, key, manual:false, msg:""});
+    Object.assign(evs, {minOut:r.minOut, minBack:r.minBack, km:r.km, est:r.est, to:r.to, fromLbl:r.fromLbl, key, manual:false, msg:""});
   } catch(err){
     if (!evs || my !== tripSeq) return;
-    evs.key = ""; evs.msg = err.message === "to" ? "Lieu introuvable. Précise l'adresse (rue, ville) ou indique les durées à la main." : err.message === "from" ? "Adresse de départ introuvable. Vérifie-la." : err.message === "far" ? "Trajet trop long pour être calculé. Indique les durées à la main." : "Calcul impossible pour le moment. Indique les durées à la main.";
+    evs.key = ""; evs.msg = err.message === "ambigfrom" ? "Ton adresse de départ est ambiguë : ajoute la ville (ex. « 83 rue Médéric, Paris ») dans Comptes › Lieux." : err.message === "ambigto" ? "Le lieu du rendez-vous est ambigu : ajoute la ville ou le code postal." : err.message === "to" ? "Lieu introuvable. Précise l'adresse (rue, ville) ou indique les durées à la main." : err.message === "from" ? "Adresse de départ introuvable. Vérifie-la." : err.message === "far" ? "Trajet trop long pour être calculé. Indique les durées à la main." : "Calcul impossible pour le moment. Indique les durées à la main.";
   }
   renderEvs();
 }
@@ -2557,7 +2567,7 @@ async function deleteAccount(btn){
 }
 // Déconnexion : efface aussi la copie locale des données (important sur un ordinateur partagé).
 async function logoutClean(){
-  ["aiBrief","blocks","name","geo","tripMode","iphKey","iphOn","msCache","notif","reviewSeen"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
+  ["aiBrief","blocks","name","geo","geo2","tripMode","iphKey","iphOn","msCache","notif","reviewSeen"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
   resetStore();
   try { await fbAuth.signOut(); } catch(e){}
   try { await fsdb.terminate(); await fsdb.clearPersistence(); } catch(e){}
