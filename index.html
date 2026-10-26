@@ -246,6 +246,18 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .evs footer{display:flex;align-items:center;gap:8px;padding:12px 20px 18px;border-top:1px solid var(--line)}
 .evs footer .sp{flex:1}
 .evs .danger{color:var(--danger)}
+.iph{margin-top:14px;padding:12px 14px;border-radius:16px;background:var(--fill);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.iph b{font-weight:600}
+.iph small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
+.iph-body{gap:14px}
+.iph-intro{margin:0;font-size:14px;color:var(--muted)}
+.iph-step{display:grid;grid-template-columns:28px 1fr;gap:10px;align-items:start}
+.iph-step > div{min-width:0;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.iph-step small{color:var(--muted);font-size:13px;line-height:1.45}
+.iph-n{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;background:var(--accent)}
+.iph-list{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.45}
+.iph-copy{display:flex;gap:8px}
+.iph-copy input{flex:1;min-width:0;border:0;background:var(--fill);border-radius:10px;padding:8px 10px;font:12.5px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--ink)}
 @media (max-width:520px){.evs-back{place-items:end center;padding:0}.evs{border-radius:26px 26px 0 0;max-height:92dvh;padding-bottom:env(safe-area-inset-bottom,0px)}.evs-row{grid-template-columns:1fr 1fr}.evs-row .field:first-child{grid-column:1/-1}.evs .seg button{padding:6px 9px;font-size:12.5px}}
 .wk-now{position:absolute;left:-1px;right:0;height:2px;background:var(--danger);z-index:2}
 .wk-now::before{content:"";position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
@@ -760,7 +772,8 @@ body.locked{overflow:hidden}
                 <div class="field"><label for="stGoal">Objectif par jour</label><select id="stGoal"></select></div>
                 <button class="btn primary" type="submit">Enregistrer</button>
               </form>
-              <p class="brief-note" style="margin:10px 0 0">Recopie le total affiché dans l'app Santé de ton iPhone, ou dis-le à l'assistant (« j'ai fait 9 500 pas »). La lecture automatique arrivera avec l'app iPhone.</p>
+              <div class="iph" id="iphBox" hidden></div>
+              <p class="brief-note" style="margin:10px 0 0" id="stepsNote">Recopie le total affiché dans l'app Santé de ton iPhone, ou dis-le à l'assistant (« j'ai fait 9 500 pas »).</p>
             </div>
           </article>
           <h2 class="sect">Muscu</h2>
@@ -943,6 +956,26 @@ body.locked{overflow:hidden}
     <button class="btn ghost" type="button" id="aDemo" style="align-self:center">Découvrir l'app sans compte</button>
     <p class="brief-note" style="margin:0;text-align:center">En créant un compte, tu acceptes la <a href="confidentialite.html" target="_blank" rel="noopener">politique de confidentialité</a>.</p>
   </form>
+</div>
+<div class="evs-back" id="iphSheet" hidden>
+  <div class="evs glass" role="dialog" aria-modal="true" aria-labelledby="iphHead">
+    <header><b id="iphHead">Synchro des pas avec l'iPhone</b><button type="button" class="icon-btn" data-iph="close" aria-label="Fermer"><svg width="22" height="22"><use href="#i-x"/></svg></button></header>
+    <div class="evs-body iph-body">
+      <p class="iph-intro">Un raccourci Apple lit chaque soir ton total de pas dans l'app Santé et l'envoie à Aube, sans rien ouvrir. Fais ces étapes <b>sur ton iPhone</b>, avec Aube ouvert dans Safari ou depuis l'écran d'accueil.</p>
+      <div class="iph-step"><span class="iph-n">1</span><div><b>Ta clé iPhone</b><small>Elle sert uniquement à enregistrer tes pas. Garde-la pour toi.</small>
+        <div id="iphKeyZone"></div></div></div>
+      <div class="iph-step"><span class="iph-n">2</span><div><b>Crée le raccourci</b><small>App Raccourcis › onglet Raccourcis › « + ». Nomme-le « Pas Aube », puis ajoute ces 3 actions :</small>
+        <ol class="iph-list">
+          <li><b>Rechercher des échantillons de santé</b> : type <i>Nombre de pas</i>. Ajoute le filtre <i>Date de début</i> › <i>est aujourd'hui</i>, et règle <i>Grouper par</i> sur <i>Jour</i>.</li>
+          <li><b>Calculer des statistiques</b> : <i>Somme</i> de <i>Échantillons de santé</i>.</li>
+          <li><b>Obtenir le contenu de l'URL</b> : colle l'adresse ci-dessous. Touche <i>Afficher plus</i> : Méthode <i>POST</i>, Corps de la requête <i>JSON</i>. Ajoute un champ Texte <i>key</i> avec ta clé, puis un champ Nombre <i>steps</i> avec la variable <i>Statistiques</i>.</li>
+        </ol>
+        <div class="iph-copy"><input id="iphUrl" readonly aria-label="Adresse du raccourci"><button type="button" class="btn" data-iph="copyurl">Copier</button></div></div></div>
+      <div class="iph-step"><span class="iph-n">3</span><div><b>Teste-le</b><small>Touche ▶︎ en bas du raccourci et autorise l'accès à Santé. Le résultat doit afficher « … pas envoyés à Aube », et ta barre du jour se met à jour ici. Compare une fois avec le total de l'app Santé.</small></div></div>
+      <div class="iph-step"><span class="iph-n">4</span><div><b>Automatise-le</b><small>Onglet Automatisation › « + » › <i>Heure de la journée</i> › 22:00, <i>Quotidiennement</i> › <i>Exécuter immédiatement</i> › choisis « Pas Aube ». Tu peux en ajouter une deuxième à 23:45 pour compter les pas de fin de soirée.</small></div></div>
+    </div>
+    <footer><button type="button" class="btn ghost danger" data-iph="off" id="iphOff">Désactiver la synchro</button><span class="sp"></span><button type="button" class="btn primary" data-iph="close">Terminé</button></footer>
+  </div>
 </div>
 <div class="toast glass" id="toast" role="status" aria-live="polite"></div>
 
@@ -2005,6 +2038,7 @@ function renderSteps(){
     + `<div class="goal-line" style="bottom:calc(22px + (100% - 30px) * ${(g/max).toFixed(3)})"><em>${fmtNum(g)}</em></div>`;
   if (!$("#stDate").value) $("#stDate").value = TODAY_ISO;
   $("#stGoal").value = String(g);
+  renderIphone();
 }
 async function saveSteps(date, n){
   const steps = clamp(Math.round(+n || 0), 0, 150000);
@@ -2420,7 +2454,7 @@ async function deleteAccount(btn){
 }
 // Déconnexion : efface aussi la copie locale des données (important sur un ordinateur partagé).
 async function logoutClean(){
-  ["aiBrief","blocks","name","geo","tripMode"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
+  ["aiBrief","blocks","name","geo","tripMode","iphKey","iphOn"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
   resetStore();
   try { await fbAuth.signOut(); } catch(e){}
   try { await fsdb.terminate(); await fsdb.clearPersistence(); } catch(e){}
@@ -2447,6 +2481,65 @@ document.addEventListener("click", ev => {
     else { currentUser = null; if (!inDemo){ resetStore(); renderAccount(); renderAll(); showAuth(true); } }
   });
 })();
+
+/* ---------- Synchro des pas avec l'iPhone ---------- */
+const iphBase = () => (CFG.aiUrl || "").replace(/\/+$/, "");
+const iphLast = () => store.steps.filter(x => x.src === "iphone").sort((a, b) => a.date < b.date ? 1 : -1)[0] || null;
+function renderIphone(){
+  const box = $("#iphBox"); if (!box) return;
+  if (!iphBase() || !currentUser || store.mode !== "db"){ box.hidden = true; $("#stepsNote").hidden = false; return; }
+  const last = iphLast(), on = !!ls.get("iphOn", false) || !!last;
+  box.hidden = false;
+  box.innerHTML = on
+    ? `<div><b>📲 Synchro iPhone activée</b><small>${last ? `Dernier envoi : ${esc(last.date === TODAY_ISO ? "aujourd'hui" : shortDate(fromIso(last.date)))} · ${fmtNum(last.steps)} pas` : "En attente du premier envoi du raccourci"}</small></div><button class="btn" type="button" data-iph="open">Réglages</button>`
+    : `<div><b>📲 Synchro automatique avec l'iPhone</b><small>Un raccourci Apple envoie chaque soir tes pas de l'app Santé.</small></div><button class="btn primary" type="button" data-iph="open">Configurer</button>`;
+  $("#stepsNote").hidden = on;
+}
+function renderIphSheet(){
+  const k = ls.get("iphKey", "");
+  $("#iphUrl").value = iphBase() + "/steps";
+  $("#iphKeyZone").innerHTML = k
+    ? `<div class="iph-copy"><input id="iphKey" readonly value="${esc(k)}" aria-label="Ta clé iPhone"><button type="button" class="btn" data-iph="copykey">Copier</button></div><button type="button" class="btn ghost" data-iph="new" style="align-self:flex-start">Créer une nouvelle clé</button>`
+    : `<button type="button" class="btn primary" data-iph="new" style="align-self:flex-start">Créer ma clé</button>${iphLast() || ls.get("iphOn", false) ? `<small>Une clé existe peut-être déjà sur un autre appareil. En créer une nouvelle désactive l'ancienne.</small>` : ""}`;
+  $("#iphOff").hidden = !(k || ls.get("iphOn", false) || iphLast());
+}
+async function iphCall(path, body){
+  const token = await currentUser.getIdToken();
+  const r = await fetch(iphBase() + path, {method:"POST", headers:{"Content-Type":"application/json", "Authorization":"Bearer " + token}, body:JSON.stringify(body || {})});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw d;
+  return d;
+}
+async function iphCopy(sel){
+  const el = $(sel); el.select();
+  try { await navigator.clipboard.writeText(el.value); } catch(e){ try { document.execCommand("copy"); } catch(e2){} }
+  toast("Copié");
+}
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-iph]"); if (!b){ if (ev.target.id === "iphSheet") $("#iphSheet").hidden = true; return; }
+  const k = b.dataset.iph;
+  if (k === "open"){ renderIphSheet(); $("#iphSheet").hidden = false; return; }
+  if (k === "close"){ $("#iphSheet").hidden = true; return; }
+  if (k === "copykey") return iphCopy("#iphKey");
+  if (k === "copyurl") return iphCopy("#iphUrl");
+  if (k === "new"){
+    b.disabled = true;
+    try {
+      const d = await iphCall("/link", {rt:currentUser.refreshToken, apiKey:CFG.firebase.apiKey});
+      ls.set("iphKey", d.key); ls.set("iphOn", true); renderIphSheet(); renderIphone(); toast("Clé créée");
+    } catch(e){ toast(e && e.error === "config" ? "La synchro n'est pas encore activée sur le serveur." : "Création de la clé impossible. Réessaie."); }
+    finally { b.disabled = false; }
+    return;
+  }
+  if (k === "off"){
+    if (!b.dataset.armed){ b.dataset.armed = "1"; b.textContent = "Confirmer"; setTimeout(() => { if (b.dataset.armed){ b.dataset.armed = ""; b.textContent = "Désactiver la synchro"; } }, 3500); return; }
+    b.dataset.armed = ""; b.textContent = "Désactiver la synchro";
+    try { await iphCall("/unlink"); } catch(e){}
+    ls.set("iphKey", ""); ls.set("iphOn", false); $("#iphSheet").hidden = true; renderIphone();
+    toast("Synchro désactivée. Supprime aussi le raccourci sur ton iPhone.");
+  }
+});
+document.addEventListener("keydown", ev => { if (ev.key === "Escape") $("#iphSheet").hidden = true; });
 })();
 </script>
 </body>
