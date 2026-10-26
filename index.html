@@ -246,6 +246,12 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .evs footer{display:flex;align-items:center;gap:8px;padding:12px 20px 18px;border-top:1px solid var(--line)}
 .evs footer .sp{flex:1}
 .evs .danger{color:var(--danger)}
+.ms-zone{display:flex;flex-direction:column;gap:8px}
+.ms-zone .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ms-zone small{color:var(--muted);font-size:12.5px}
+.ms-zone .who{font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.status.on i{background:var(--focus)}
+.status.err i{background:var(--danger)}
 .iph{margin-top:14px;padding:12px 14px;border-radius:16px;background:var(--fill);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .iph b{font-weight:600}
 .iph small{display:block;color:var(--muted);font-size:12.5px;margin-top:1px}
@@ -811,17 +817,17 @@ body.locked{overflow:hidden}
           <div class="page-head"><div><div class="eyebrow">Connexions & réglages</div><h1>Tout ton emploi du temps</h1><p>Tes agendas, tes notes, tes lieux : Aube réunit tout au même endroit et te prépare le brief chaque matin.</p></div><button class="btn" type="button" data-go="offre"><svg><use href="#i-star"/></svg>Aube Pro</button></div>
           <div class="grid2">
             <article class="card acct">
-              <div class="acct-top"><div class="acct-logo" style="background:var(--pro)">365</div><div><h2 style="font-size:17px">Outlook — Microsoft 365</h2><span class="status"><i></i>Bientôt disponible</span></div></div>
+              <div class="acct-top"><div class="acct-logo" style="background:var(--pro)">365</div><div><h2 style="font-size:17px">Outlook — Microsoft 365</h2><span class="status" id="msStpro"><i></i>Non connecté</span></div></div>
               <p>Ton compte pro. Aube récupérera :</p>
-              <ul><li>les réunions de l'agenda principal</li><li>les tâches Microsoft To Do et les e-mails marqués</li><li>les invitations en attente de réponse</li></ul>
-              <button class="btn primary" type="button" data-howto="h1">Connecter</button>
+              <ul><li>les rendez-vous de ton agenda principal, mis à jour automatiquement</li><li>les rendez-vous pro que tu dictes à l'assistant y sont ajoutés</li></ul>
+              <div class="ms-zone" id="msZpro"></div>
               <div class="howto" id="h1" hidden><b>Comment ça marchera</b><ol><li>Connexion Microsoft (OAuth), lecture seule.</li><li>Ton admin IT peut devoir approuver l'application.</li><li>Synchronisation toutes les 15 min via Microsoft Graph.</li></ol><span class="brief-note">En attendant, exporte ton agenda Outlook en .ics et importe-le juste en dessous.</span></div>
             </article>
             <article class="card acct">
-              <div class="acct-top"><div class="acct-logo" style="background:var(--perso)">O</div><div><h2 style="font-size:17px">Outlook.com — personnel</h2><span class="status"><i></i>Bientôt disponible</span></div></div>
+              <div class="acct-top"><div class="acct-logo" style="background:var(--perso)">O</div><div><h2 style="font-size:17px">Outlook.com — personnel</h2><span class="status" id="msStperso"><i></i>Non connecté</span></div></div>
               <p>Ton compte perso @outlook.com ou @hotmail.com. Aube récupérera :</p>
-              <ul><li>les événements de ton agenda perso</li><li>tes listes Microsoft To Do</li><li>les anniversaires et rappels</li></ul>
-              <button class="btn primary" type="button" data-howto="h2">Connecter</button>
+              <ul><li>les événements de ton agenda perso, mis à jour automatiquement</li><li>les rendez-vous perso que tu dictes à l'assistant y sont ajoutés</li></ul>
+              <div class="ms-zone" id="msZperso"></div>
               <div class="howto" id="h2" hidden><b>Comment ça marchera</b><ol><li>Connexion avec ton compte Microsoft personnel.</li><li>Aucune validation d'admin nécessaire.</li><li>Les deux comptes sont fusionnés dans une seule vue.</li></ol><span class="brief-note">En attendant, exporte ton agenda Outlook en .ics et importe-le juste en dessous.</span></div>
             </article>
           </div>
@@ -867,6 +873,7 @@ body.locked{overflow:hidden}
                 <li><label for="sTmr">Aperçu de demain</label><input type="checkbox" class="switch" id="sTmr" checked></li>
                 <li><label for="sFocus">Proposer des créneaux de focus</label><input type="checkbox" class="switch" id="sFocus" checked></li>
                 <li><label for="sRoll">Reporter les tâches non faites au lendemain</label><input type="checkbox" class="switch" id="sRoll" checked></li>
+                <li><label for="sMsPush">Ajouter dans Outlook les rendez-vous dictés</label><input type="checkbox" class="switch" id="sMsPush" checked></li>
                 <li><label for="sTrip">Calculer le trajet des nouveaux rendez-vous</label><input type="checkbox" class="switch" id="sTrip" checked></li>
                 <li><label for="sBuffer">Marge avant chaque départ</label><select id="sBuffer"><option value="0">Aucune</option><option value="5">5 min</option><option value="10" selected>10 min</option><option value="15">15 min</option></select></li>
                 <li><label for="sGoal">Objectif muscu par semaine</label><select id="sGoal"><option value="1">1 séance</option><option value="2">2 séances</option><option value="3" selected>3 séances</option><option value="4">4 séances</option><option value="5">5 séances</option><option value="6">6 séances</option></select></li>
@@ -1030,6 +1037,7 @@ function eventsFor(date){
   const evs = (store.mode === "demo" ? WEEK_TPL[idx] : []).map((e,i) => ({id:d+"-"+i, title:e[0], start:toMin(e[1]), end:toMin(e[2]), acc:e[3], where:e[4], place:e[5]||null}));
   blocks.filter(b => b.date === d).forEach(b => evs.push({id:b.id, title:b.title, start:b.start, end:b.end, acc:"focus", where:"Créneau de focus"}));
   store.events.filter(e => e.date === d).forEach(e => evs.push({id:e.id, title:e.title, start:e.start, end:e.end, acc:e.acc === "perso" ? "perso" : "pro", where:e.where || "", user:true, tbc:!!e.tbc, src:e.src||"assistant", place:e.place||null, travel:e.travel||null}));
+  msEventsOn(d).forEach(e => evs.push(e));
   return evs.sort((a,b) => a.start-b.start);
 }
 function freeSlots(date, from, lo, hi){
@@ -1161,6 +1169,7 @@ function renderTasks(){
 
 let flashId = null;
 function renderWeek(){
+  msEnsure();
   const HH = 44, H0 = 7, H1 = 23, el = $("#week");
   el.style.setProperty("--hh", HH+"px");
   const mon = addDays(MONDAY0, weekOffset*7), end = addDays(mon,6);
@@ -1275,7 +1284,7 @@ async function drop(kind, id){
   else { store[kind] = store[kind].filter(x=>x.id!==id); renderAll(); }
 }
 const saveTask = t => put("tasks", t), removeTask = id => drop("tasks", id);
-const saveEvent = e => put("events", e), removeEvent = id => drop("events", id);
+const saveEvent = e => put("events", e), removeEvent = id => { msDropFor(id); return drop("events", id); };
 function dbErr(e){ toast(e && e.code === "quota_exceeded" ? "Espace plein : supprime quelques éléments terminés." : "Enregistrement impossible pour le moment. Réessaie."); }
 
 function blockSlot(t){
@@ -1474,7 +1483,7 @@ async function applyActions(r, msg){
         const ev = {id:newId("e"), title:cleanTxt(a.title) || "Rendez-vous", date, start, end, where:cleanTxt(a.where, 80), acc:a.account === "perso" ? "perso" : "pro", tbc, src:"assistant", place:["work","gym"].includes(a.place) ? a.place : null, createdAt:new Date().toISOString()};
         const clash = eventsFor(fromIso(date)).filter(x => x.start < ev.end && x.end > ev.start && x.acc !== "focus");
         await saveEvent(ev);
-        autoTrip(ev.id, ev);
+        autoTrip(ev.id, ev); msPush(ev);
         msg.cards.push(addCard({kind:"event", id:ev.id, snap:ev}));
         if (clash.length && !tbc) notes.push(`Attention, ça chevauche « ${clash[0].title} ».`);
       } else if (a.type === "update_event" || a.type === "delete_event"){
@@ -1489,7 +1498,7 @@ async function applyActions(r, msg){
         const ns = parseT(a.start), ne = parseT(a.end);
         if (ns != null){ const len = e.end - e.start; next.start = ns; next.end = ne != null && ne > ns ? ne : Math.min(ns + len, 24*60-1); next.tbc = false; }
         else if (ne != null && ne > next.start) next.end = ne;
-        await saveEvent(next);
+        await saveEvent(next); msUpdate(next);
         msg.cards.push(addCard({kind:"updated", id:e.id, snap:next, prev}));
       } else if (a.type === "log_steps"){
         const date = validDate(a.date) || TODAY_ISO, steps = clamp(Math.round(Number(a.steps) || 0), 0, 150000);
@@ -1554,7 +1563,7 @@ async function undoCard(cid){
     else if (c.kind === "steps") await (c.prev ? put("steps", c.prev) : drop("steps", c.id));
     else if (c.kind === "goal") await put("goals", c.prev);
     else if (c.kind === "newgoal") await drop("goals", c.id);
-    else if (c.kind === "updated" || c.kind === "deleted") await saveEvent(c.prev);
+    else if (c.kind === "updated" || c.kind === "deleted"){ await saveEvent(c.prev); if (c.kind === "updated") msUpdate(c.prev); else msPush({...c.prev, msId:null}); }
     c.undone = true; toast("Annulé"); renderAll();
   } catch(e){ dbErr(e); }
 }
@@ -1802,7 +1811,7 @@ $("#evForm").addEventListener("submit", async ev => {
   try {
     if (!home() && from && evs.mode) await put("places", {id:newId("p"), name:"Domicile", kind:"home", address:from, mode:evs.mode, minutes:0, createdAt:new Date().toISOString()});
     if (evs.mode) ls.set("tripMode", evs.mode);
-    await saveEvent(next); flashId = next.id; closeEvSheet(); toast("Rendez-vous mis à jour");
+    await saveEvent(next); msUpdate(next); flashId = next.id; closeEvSheet(); toast("Rendez-vous mis à jour");
   } catch(err){ dbErr(err); } finally { btn.disabled = false; }
 });
 
@@ -2328,7 +2337,7 @@ function makeAI(){
 function resetStore(){
   unsubs.forEach(u => { try { u(); } catch(e){} }); unsubs = [];
   Object.assign(store, {mode:"loading", tasks:[], events:[], places:[], sessions:[], steps:[], goals:[], cols:{}});
-  rolled = false; aiBrief = null; sampleFn = null;
+  rolled = false; aiBrief = null; sampleFn = null; msReset();
 }
 function demoMode(){
   resetStore(); inDemo = true;
@@ -2350,7 +2359,7 @@ function startCloud(user){
   sampleFn = makeAI(); $("#briefAi").hidden = !sampleFn;
   const c = ls.get("aiBrief", null); aiBrief = c && c.date === TODAY_ISO && c.uid === user.uid ? c.text : null;
   $("#sName").value = userName();
-  renderAccount(); renderAll();
+  renderAccount(); renderAll(); msInit();
 }
 function renderAccount(){
   const box = $("#acctBox"), panel = $("#acctPanel");
@@ -2454,7 +2463,7 @@ async function deleteAccount(btn){
 }
 // Déconnexion : efface aussi la copie locale des données (important sur un ordinateur partagé).
 async function logoutClean(){
-  ["aiBrief","blocks","name","geo","tripMode","iphKey","iphOn"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
+  ["aiBrief","blocks","name","geo","tripMode","iphKey","iphOn","msCache"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
   resetStore();
   try { await fbAuth.signOut(); } catch(e){}
   try { await fsdb.terminate(); await fsdb.clearPersistence(); } catch(e){}
@@ -2540,6 +2549,133 @@ document.addEventListener("click", async ev => {
   }
 });
 document.addEventListener("keydown", ev => { if (ev.key === "Escape") $("#iphSheet").hidden = true; });
+
+/* ---------- Synchro Outlook (Microsoft Graph via la passerelle) ---------- */
+var ms = {accounts:[], events:[], from:"", to:"", at:0, busy:false, loaded:false, err:{}};
+function msReady(){ return !!ms && !!(iphBase() && typeof currentUser !== "undefined" && currentUser && store.mode !== "demo"); }
+function msReset(){ ms = {accounts:[], events:[], from:"", to:"", at:0, busy:false, loaded:false, err:{}}; try { renderMs(); } catch(e){} }
+function msHas(acc){ return ms.accounts.some(a => a.acc === acc); }
+function msEventsOn(d){
+  if (!ms || !ms.events.length) return [];
+  const linked = new Set(store.events.filter(e => e.msId).map(e => e.msId));
+  return ms.events.filter(e => e.date === d && !linked.has(e.msId)).map(e => ({...e}));
+}
+function msParse(e){
+  if (!e.start || !e.end || e.allDay) return null;
+  const date = e.start.slice(0,10), s = +e.start.slice(11,13)*60 + +e.start.slice(14,16);
+  let en = e.end.slice(0,10) > date ? 24*60-1 : +e.end.slice(11,13)*60 + +e.end.slice(14,16);
+  if (en <= s) en = Math.min(s + 30, 24*60-1);
+  return {id:"ms-" + e.id.slice(-24), msId:e.id, title:e.title, date, start:s, end:en, acc:e.acc === "perso" ? "perso" : "pro", where:e.where || "", src:"outlook", ext:true};
+}
+async function msCall(path, body){
+  const token = await currentUser.getIdToken();
+  const r = await fetch(iphBase() + path, {method:"POST", headers:{"Content-Type":"application/json", "Authorization":"Bearer " + token}, body:JSON.stringify(body || {})});
+  const d = await r.json().catch(() => ({}));
+  if (!r.ok) throw Object.assign({status:r.status}, d);
+  return d;
+}
+async function msInit(){
+  if (!msReady()) { renderMs(); return; }
+  const c = ls.get("msCache", null);
+  if (c && c.uid === currentUser.uid && Date.now() - c.at < 7*86400000){ ms.events = c.events || []; ms.from = c.from; ms.to = c.to; renderAll(); }
+  const q = new URLSearchParams(location.search), st = q.get("ms");
+  if (st){
+    toast(st === "ok" ? (q.get("acc") === "perso" ? "Outlook.com connecté" : "Outlook pro connecté") : st === "expired" ? "Connexion expirée, réessaie." : "Connexion Microsoft impossible. Réessaie.");
+    history.replaceState(null, "", location.pathname + location.hash);
+  }
+  try { const d = await msCall("/ms/accounts"); ms.accounts = d.accounts || []; ms.loaded = true; }
+  catch(e){ ms.loaded = true; ms.accounts = []; ms.off = e && e.error === "config"; }
+  renderMs();
+  if (ms.accounts.length) msSync(true); else if (ms.events.length){ ms.events = []; renderAll(); }
+}
+function msRange(){
+  const mon = addDays(MONDAY0, weekOffset*7);
+  return [iso(addDays(mon, -7)), iso(addDays(mon, 41))];
+}
+function msEnsure(){
+  if (!ms || !ms.accounts.length || ms.busy) return;
+  const mon = addDays(MONDAY0, weekOffset*7), a = iso(mon), b = iso(addDays(mon, 6));
+  if (!ms.from || a < ms.from || b > ms.to) msSync(true);
+}
+async function msSync(force){
+  if (!msReady() || !ms.accounts.length || ms.busy) return;
+  if (!force && Date.now() - ms.at < 5*60000) return;
+  const [from, to] = msRange();
+  ms.busy = true; renderMs();
+  try {
+    const d = await msCall("/ms/events", {from, to});
+    ms.events = (d.events || []).map(msParse).filter(Boolean);
+    ms.from = from; ms.to = to; ms.at = Date.now(); ms.err = {};
+    (d.errors || []).forEach(x => ms.err[x.acc] = x.error);
+    ls.set("msCache", {uid:currentUser.uid, at:ms.at, from, to, events:ms.events});
+  } catch(e){ ms.err.all = "sync"; }
+  ms.busy = false; renderAll(); renderMs();
+}
+function msAccFor(acc){ return msHas(acc) ? acc : (ms.accounts[0] || {}).acc; }
+async function msPush(ev){
+  if (!msReady() || !ms.accounts.length || !ls.get("msPush", true) || !ev || ev.msId) return;
+  const acc = msAccFor(ev.acc); if (!acc) return;
+  try {
+    const d = await msCall("/ms/create", {acc, title:ev.title, date:ev.date, start:ev.start, end:ev.end, where:ev.where || ""});
+    if (store.cols.events) await store.cols.events.doc(ev.id).update({msId:d.id, msAcc:d.acc || acc});
+    else { const e = store.events.find(x => x.id === ev.id); if (e){ e.msId = d.id; e.msAcc = d.acc || acc; } }
+    toast(d.acc === "perso" ? "Ajouté aussi dans Outlook.com" : "Ajouté aussi dans Outlook");
+  } catch(e){}
+}
+async function msUpdate(ev){
+  if (!msReady() || !ev || !ev.msId) return;
+  try { await msCall("/ms/update", {acc:ev.msAcc || ev.acc, id:ev.msId, title:ev.title, date:ev.date, start:ev.start, end:ev.end, where:ev.where || ""}); } catch(e){}
+}
+function msDropFor(id){
+  const e = store.events.find(x => x.id === id);
+  if (!e || !e.msId || !msReady()) return;
+  msCall("/ms/delete", {acc:e.msAcc || e.acc, id:e.msId}).catch(() => {});
+}
+function msAgo(t){ const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "à l'instant" : m < 60 ? `il y a ${m} min` : `il y a ${Math.round(m/60)} h`; }
+function renderMs(){
+  if (!ms) return;
+  ["pro", "perso"].forEach(acc => {
+    const z = document.getElementById("msZ" + acc), st = document.getElementById("msSt" + acc); if (!z || !st) return;
+    const a = ms.accounts.find(x => x.acc === acc), label = acc === "pro" ? "Microsoft 365" : "Outlook.com";
+    st.classList.remove("on", "err");
+    if (!msReady()){
+      st.innerHTML = "<i></i>Non connecté";
+      z.innerHTML = `<small>${store.mode === "demo" ? "Crée un compte gratuit pour connecter ton agenda." : "Connexion disponible une fois connecté à Aube."}</small>`;
+      return;
+    }
+    if (ms.off){ st.innerHTML = "<i></i>Bientôt disponible"; z.innerHTML = `<small>La connexion Microsoft n'est pas encore activée sur le serveur.</small>`; return; }
+    if (a){
+      const err = ms.err[acc] || ms.err.all;
+      st.classList.add(err ? "err" : "on");
+      st.innerHTML = err ? "<i></i>Synchronisation en échec" : ms.busy ? "<i></i>Synchronisation…" : `<i></i>Synchronisé ${ms.at ? msAgo(ms.at) : ""}`;
+      z.innerHTML = `<span class="who">${esc(a.email || a.name || label)}</span>${err ? `<small>Reconnecte le compte si le problème continue.</small>` : ""}<div class="row"><button class="btn" type="button" data-ms="sync">Synchroniser</button>${err ? `<button class="btn primary" type="button" data-ms="connect" data-acc="${acc}">Reconnecter</button>` : ""}<button class="btn ghost danger" type="button" data-ms="off" data-acc="${acc}">Déconnecter</button></div>`;
+    } else {
+      st.innerHTML = "<i></i>Non connecté";
+      z.innerHTML = `<div class="row"><button class="btn primary" type="button" data-ms="connect" data-acc="${acc}">Connecter ${label}</button></div>${acc === "pro" ? `<small>Ton entreprise peut devoir autoriser Aube la première fois.</small>` : ""}`;
+    }
+  });
+}
+document.addEventListener("click", async ev => {
+  const b = ev.target.closest("[data-ms]"); if (!b) return;
+  const k = b.dataset.ms, acc = b.dataset.acc;
+  if (k === "sync"){ msSync(true); return; }
+  if (k === "connect"){
+    b.disabled = true;
+    try { const d = await msCall("/ms/start", {acc}); location.href = d.url; }
+    catch(e){ toast(e && e.error === "config" ? "La connexion Microsoft n'est pas encore activée." : "Connexion impossible pour le moment."); b.disabled = false; }
+    return;
+  }
+  if (k === "off"){
+    if (!b.dataset.armed){ b.dataset.armed = "1"; b.textContent = "Confirmer"; setTimeout(() => { if (b.dataset.armed){ b.dataset.armed = ""; b.textContent = "Déconnecter"; } }, 3500); return; }
+    try { await msCall("/ms/disconnect", {acc}); } catch(e){}
+    ms.accounts = ms.accounts.filter(x => x.acc !== acc); ms.events = ms.events.filter(x => x.acc !== acc);
+    ls.set("msCache", null); renderAll(); renderMs(); toast("Compte déconnecté");
+  }
+});
+$("#sMsPush").checked = ls.get("msPush", true);
+$("#sMsPush").addEventListener("change", e => ls.set("msPush", e.target.checked));
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") msSync(false); });
+setInterval(() => msSync(false), 10*60000);
 })();
 </script>
 </body>
