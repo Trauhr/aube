@@ -62,7 +62,9 @@ html,body{height:100%}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;letter-spacing:-.005em}
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
-:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:1px;border-radius:10px}
+:focus-visible{outline:3px solid color-mix(in srgb,var(--accent) 50%,transparent);outline-offset:1px}
+.seg button:focus-visible,.btn:focus-visible,.icon-btn:focus-visible{outline:none;box-shadow:inset 0 0 0 2px color-mix(in srgb,var(--accent) 60%,transparent)}
+:focus:not(:focus-visible){outline:none}
 h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .eyebrow{font-size:13px;text-transform:uppercase;letter-spacing:.02em;color:var(--muted);font-weight:600}
 
@@ -786,7 +788,7 @@ body.locked{overflow:hidden}
             <div><div class="eyebrow" id="weekRange"></div><h1 id="weekTitle">Ta semaine</h1><p>Tes deux agendas Outlook, ce que tu as dicté à l'assistant et tes créneaux de focus.</p></div>
             <div class="seg glass" role="group" aria-label="Changer de semaine">
               <button type="button" id="wkPrev" aria-label="Semaine précédente"><svg style="width:16px;height:16px;display:block"><use href="#i-left"/></svg></button>
-              <button type="button" id="wkToday">Aujourd'hui</button>
+              <button type="button" id="wkToday" title="Revenir à la semaine en cours">Cette semaine</button>
               <button type="button" id="wkNext" aria-label="Semaine suivante"><svg style="width:16px;height:16px;display:block"><use href="#i-right"/></svg></button>
             </div>
             <button class="btn" type="button" data-review="week"><svg><use href="#i-chart"/></svg>Bilan</button>
