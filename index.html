@@ -1278,13 +1278,13 @@ function renderWeek(){
     eventsFor(d).forEach(e => {
       const t = tripOf(e);
       if (t){
-        const blk = (a, b, label) => { a = clamp(a, H0*60, H1*60); b = clamp(b, H0*60, H1*60); if (b - a < 1) return; const hh = (b-a)/60*HH - 1; body += `<div class="wk-trip${hh < 13 ? " tiny" : ""}" style="top:${(a/60-H0)*HH}px;height:${hh}px">${label}</div>`; };
+        const blk = (a, b, label) => { a = clamp(a, H0*60, H1*60); b = clamp(b, H0*60, H1*60); if (b - a < 1) return; const hh = (b-a)/60*HH - 1; body += `<div class="wk-trip${hh < 13 ? " tiny" : ""}" style="top:${(a/60-H0)*HH}px;height:${hh}px" title="${label}">${label}</div>`; };
         if (t.out && t.minOut) blk(e.start - t.minOut, e.start, `${TRIP_ICON[t.mode]||""} Aller · ${t.minOut} min`);
         if (t.back && t.minBack) blk(e.end, e.end + t.minBack, `${TRIP_ICON[t.mode]||""} Retour · ${t.minBack} min`);
       }
       const s = clamp(e.start, H0*60, H1*60), en = clamp(e.end, H0*60, H1*60); if (en <= s) return;
       const top = (s/60-H0)*HH, h = Math.max(22,(en-s)/60*HH-2);
-      body += `<div class="wk-ev ${e.acc}${h<40?" short":""}${e.user?" user":""}${e.id===flashId?" flash":""}"${e.user?` data-eid="${esc(e.id)}" role="button" tabindex="0"`:""} style="top:${top}px;height:${h}px" aria-label="${esc(e.title)}, ${fmtT(e.start)}–${fmtT(e.end)}"><b>${e.user?"✦ ":""}${esc(e.title)}</b><small>${fmtT(e.start)}–${fmtT(e.end)}${e.tbc?" · à confirmer":""}</small></div>`;
+      body += `<div class="wk-ev ${e.acc}${h<40?" short":""}${e.user?" user":""}${e.id===flashId?" flash":""}"${e.user?` data-eid="${esc(e.id)}" role="button" tabindex="0"`:""} style="top:${top}px;height:${h}px" title="${esc(e.title)} · ${fmtT(e.start)}–${fmtT(e.end)}${e.user?" · touche pour modifier":""}"><b>${esc(e.title)}</b><small>${fmtT(e.start)}–${fmtT(e.end)}${e.tbc?" · à confirmer":""}</small></div>`;
     });
     if (td){ const n = nowMin(); if (n/60 > H0 && n/60 < H1) body += `<div class="wk-now" style="top:${(n/60-H0)*HH}px"></div>`; }
     body += `</div>`;
