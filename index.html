@@ -2197,17 +2197,25 @@ async function deleteAccount(btn){
   try {
     for (const k of ["tasks","events","places","sessions","steps","goals"]) for (const d of store[k].slice()) await store.cols[k].doc(d.id).delete();
     await currentUser.delete();
-    ["aiBrief","blocks","name"].forEach(k => { try { localStorage.removeItem("aube." + k); } catch(e){} });
     toast("Compte et données supprimés.");
+    setTimeout(logoutClean, 1200);
   } catch(e){
     if (e && e.code === "auth/requires-recent-login"){ toast("Par sécurité, reconnecte-toi puis recommence la suppression."); await fbAuth.signOut(); }
     else { toast("La suppression n'a pas abouti. Réessaie."); btn.disabled = false; btn.textContent = "Supprimer"; }
   }
 }
+// Déconnexion : efface aussi la copie locale des données (important sur un ordinateur partagé).
+async function logoutClean(){
+  ["aiBrief","blocks","name"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
+  resetStore();
+  try { await fbAuth.signOut(); } catch(e){}
+  try { await fsdb.terminate(); await fsdb.clearPersistence(); } catch(e){}
+  location.reload();
+}
 document.addEventListener("click", ev => {
   const b = ev.target.closest("[data-acc]"); if (!b) return;
   const k = b.dataset.acc;
-  if (k === "logout" && fbAuth){ ["aiBrief","blocks","name"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} }); fbAuth.signOut(); }
+  if (k === "logout" && fbAuth) logoutClean();
   if (k === "signup"){ inDemo = false; resetStore(); renderAccount(); renderAll(); showAuth(true, "signup"); }
   if (k === "export") exportData();
   if (k === "delete") deleteAccount(b);
