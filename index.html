@@ -2483,10 +2483,10 @@ document.addEventListener("click", ev => {
 })();
 
 /* ---------- Synchro des pas avec l'iPhone ---------- */
-const iphBase = () => (CFG.aiUrl || "").replace(/\/+$/, "");
-const iphLast = () => store.steps.filter(x => x.src === "iphone").sort((a, b) => a.date < b.date ? 1 : -1)[0] || null;
+function iphBase(){ return ((typeof CFG !== "undefined" && CFG && CFG.aiUrl) || "").replace(/\/+$/, ""); }
+function iphLast(){ return store.steps.filter(x => x.src === "iphone").sort((a, b) => a.date < b.date ? 1 : -1)[0] || null; }
 function renderIphone(){
-  const box = $("#iphBox"); if (!box) return;
+  const box = $("#iphBox"); if (!box || typeof currentUser === "undefined") return;
   if (!iphBase() || !currentUser || store.mode !== "db"){ box.hidden = true; $("#stepsNote").hidden = false; return; }
   const last = iphLast(), on = !!ls.get("iphOn", false) || !!last;
   box.hidden = false;
