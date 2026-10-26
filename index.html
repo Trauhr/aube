@@ -220,6 +220,33 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .wk-ev b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wk-ev small{color:var(--muted);font-variant-numeric:tabular-nums}
 .wk-ev.short small{display:none}
+.wk-ev.user{cursor:pointer;z-index:1}
+.wk-ev.user:hover{filter:brightness(1.04)}
+.wk-trip{position:absolute;left:9px;right:7px;border-radius:6px;font-size:11px;line-height:1.25;padding:2px 6px;color:var(--muted);font-weight:500;background:repeating-linear-gradient(135deg,color-mix(in srgb,var(--muted) 13%,transparent) 0 4px,transparent 4px 8px);border:1px dashed color-mix(in srgb,var(--muted) 40%,transparent);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;pointer-events:none}
+.wk-trip.tiny{font-size:0;padding:0}
+.evs-back{position:fixed;inset:0;z-index:55;display:grid;place-items:center;padding:16px;background:rgba(8,12,24,.30);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.evs-back[hidden]{display:none}
+.evs{width:min(470px,100%);max-height:calc(100dvh - 32px);overflow:auto;border-radius:26px;display:flex;flex-direction:column;margin:0}
+.evs header{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 16px 4px 20px}
+.evs header b{font-size:19px;letter-spacing:-.01em}
+.evs-body{padding:8px 20px 14px;display:flex;flex-direction:column;gap:12px}
+.evs-row{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px}
+.evs-sec{font-size:13px;font-weight:600;color:var(--muted);margin:6px 0 -4px 4px}
+.evs-trip{display:flex;flex-direction:column;gap:10px;background:var(--fill);border-radius:18px;padding:12px 14px}
+.evs-trip[hidden]{display:none}
+.evs-from{font-size:14px;display:flex;flex-direction:column;gap:1px}
+.evs-from small{color:var(--muted);font-size:12px}
+.evs-in{border:0;background:var(--glass-strong);border-radius:12px;padding:9px 12px;width:100%;font-size:15px}
+.evs-res{font-size:15px;font-weight:600;min-height:20px}
+.evs-res small{display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:2px}
+.evs-line{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:14px;min-height:36px}
+.evs-line > span:first-child small{display:block;color:var(--muted);font-size:12px}
+.evs-ctl{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;white-space:nowrap}
+.evs-min{width:64px;border:0;background:var(--glass-strong);border-radius:10px;padding:6px 8px;text-align:right;font-size:15px;color:var(--ink)}
+.evs footer{display:flex;align-items:center;gap:8px;padding:12px 20px 18px;border-top:1px solid var(--line)}
+.evs footer .sp{flex:1}
+.evs .danger{color:var(--danger)}
+@media (max-width:520px){.evs-back{place-items:end center;padding:0}.evs{border-radius:26px 26px 0 0;max-height:92dvh;padding-bottom:env(safe-area-inset-bottom,0px)}.evs-row{grid-template-columns:1fr 1fr}.evs-row .field:first-child{grid-column:1/-1}.evs .seg button{padding:6px 9px;font-size:12.5px}}
 .wk-now{position:absolute;left:-1px;right:0;height:2px;background:var(--danger);z-index:2}
 .wk-now::before{content:"";position:absolute;left:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
@@ -827,6 +854,7 @@ body.locked{overflow:hidden}
                 <li><label for="sTmr">Aperçu de demain</label><input type="checkbox" class="switch" id="sTmr" checked></li>
                 <li><label for="sFocus">Proposer des créneaux de focus</label><input type="checkbox" class="switch" id="sFocus" checked></li>
                 <li><label for="sRoll">Reporter les tâches non faites au lendemain</label><input type="checkbox" class="switch" id="sRoll" checked></li>
+                <li><label for="sTrip">Calculer le trajet des nouveaux rendez-vous</label><input type="checkbox" class="switch" id="sTrip" checked></li>
                 <li><label for="sBuffer">Marge avant chaque départ</label><select id="sBuffer"><option value="0">Aucune</option><option value="5">5 min</option><option value="10" selected>10 min</option><option value="15">15 min</option></select></li>
                 <li><label for="sGoal">Objectif muscu par semaine</label><select id="sGoal"><option value="1">1 séance</option><option value="2">2 séances</option><option value="3" selected>3 séances</option><option value="4">4 séances</option><option value="5">5 séances</option><option value="6">6 séances</option></select></li>
               </ul>
@@ -872,6 +900,31 @@ body.locked{overflow:hidden}
     <label for="assistInput" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Parle à l'assistant</label>
     <input id="assistInput" maxlength="400" placeholder="Ex. « j'ai rdv mardi à 15 h avec Mme Martin »">
     <button class="send" type="submit" id="assistSend" aria-label="Envoyer" disabled><svg><use href="#i-up"/></svg></button>
+  </form>
+</div>
+<div class="evs-back" id="evSheet" hidden>
+  <form class="evs glass" id="evForm" autocomplete="off" role="dialog" aria-modal="true" aria-labelledby="evsHead">
+    <header><b id="evsHead">Rendez-vous</b><button type="button" class="icon-btn" data-evs="close" aria-label="Fermer"><svg width="22" height="22"><use href="#i-x"/></svg></button></header>
+    <div class="evs-body">
+      <div class="field"><label for="evsTitle">Titre</label><input id="evsTitle" maxlength="120" required></div>
+      <div class="evs-row">
+        <div class="field"><label for="evsDate">Date</label><input id="evsDate" type="date" required></div>
+        <div class="field"><label for="evsStart">Début</label><input id="evsStart" type="time" required></div>
+        <div class="field"><label for="evsEnd">Fin</label><input id="evsEnd" type="time" required></div>
+      </div>
+      <div class="field"><label for="evsWhere">Lieu</label><input id="evsWhere" maxlength="120" placeholder="Adresse, ville ou nom du lieu"></div>
+      <div class="evs-sec">Temps de trajet</div>
+      <div class="seg glass" id="evsModes" role="group" aria-label="Mode de déplacement"></div>
+      <div class="evs-trip" id="evsTrip" hidden>
+        <div class="evs-from" id="evsFrom"></div>
+        <input class="evs-in" id="evsHomeAddr" placeholder="Ton adresse de départ, ex. 12 rue Oberkampf, Paris" hidden>
+        <div class="evs-res" id="evsRes" aria-live="polite"></div>
+        <div class="evs-line"><span>Aller<small>avant le rendez-vous</small></span><span class="evs-ctl"><input class="evs-min" id="evsMinOut" type="number" min="1" max="600" inputmode="numeric" aria-label="Durée de l'aller en minutes">min<input type="checkbox" class="switch" id="evsOut" aria-label="Afficher l'aller"></span></div>
+        <div class="evs-line"><span>Retour<small>après le rendez-vous</small></span><span class="evs-ctl"><input class="evs-min" id="evsMinBack" type="number" min="1" max="600" inputmode="numeric" aria-label="Durée du retour en minutes">min<input type="checkbox" class="switch" id="evsBack" aria-label="Afficher le retour"></span></div>
+        <a class="btn ghost" id="evsMap" target="_blank" rel="noopener" style="align-self:flex-start">Voir l'itinéraire dans Plans</a>
+      </div>
+    </div>
+    <footer><button type="button" class="btn ghost danger" id="evsDel">Supprimer</button><span class="sp"></span><button type="button" class="btn" data-evs="close">Annuler</button><button type="submit" class="btn primary" id="evsSave">Enregistrer</button></footer>
   </form>
 </div>
 
@@ -943,7 +996,7 @@ function eventsFor(date){
   const idx = (date.getDay()+6)%7, d = iso(date);
   const evs = (store.mode === "demo" ? WEEK_TPL[idx] : []).map((e,i) => ({id:d+"-"+i, title:e[0], start:toMin(e[1]), end:toMin(e[2]), acc:e[3], where:e[4], place:e[5]||null}));
   blocks.filter(b => b.date === d).forEach(b => evs.push({id:b.id, title:b.title, start:b.start, end:b.end, acc:"focus", where:"Créneau de focus"}));
-  store.events.filter(e => e.date === d).forEach(e => evs.push({id:e.id, title:e.title, start:e.start, end:e.end, acc:e.acc === "perso" ? "perso" : "pro", where:e.where || "", user:true, tbc:!!e.tbc, src:e.src||"assistant", place:e.place||null}));
+  store.events.filter(e => e.date === d).forEach(e => evs.push({id:e.id, title:e.title, start:e.start, end:e.end, acc:e.acc === "perso" ? "perso" : "pro", where:e.where || "", user:true, tbc:!!e.tbc, src:e.src||"assistant", place:e.place||null, travel:e.travel||null}));
   return evs.sort((a,b) => a.start-b.start);
 }
 function freeSlots(date, from, lo, hi){
@@ -1039,7 +1092,7 @@ function renderTimeline(el, evs, isTodayList){
   evs.forEach(e => {
     if (!nowPlaced && e.start > n){ html += nowRow; nowPlaced = true; }
     const past = isTodayList && e.end <= n;
-    html += `<li${e.user?` data-eid="${esc(e.id)}"`:""}><span class="t">${fmtT(e.start)}</span><div class="ev ${e.acc}${past?" past":""}"><strong>${esc(e.title)}${e.user?`<span class="chip ai">${e.src==="ics"?"Importé":"Assistant"}</span>`:""}${e.tbc?`<span class="chip late">Heure à confirmer</span>`:""}</strong><small>${fmtT(e.start)}–${fmtT(e.end)}</small>${e.where?`<small> · ${esc(e.where)}</small>`:""}${(()=>{ const pl = placeFor(e); return pl && pl.minutes ? `<small> · trajet ${pl.minutes} min</small>` : ""; })()}</div>${e.user?`<button class="icon-btn del" type="button" data-act="delev" aria-label="Supprimer ${esc(e.title)}"><svg><use href="#i-trash"/></svg></button>`:"<span></span>"}</li>`;
+    html += `<li${e.user?` data-eid="${esc(e.id)}"`:""}><span class="t">${fmtT(e.start)}</span><div class="ev ${e.acc}${past?" past":""}"><strong>${esc(e.title)}${e.user?`<span class="chip ai">${e.src==="ics"?"Importé":"Assistant"}</span>`:""}${e.tbc?`<span class="chip late">Heure à confirmer</span>`:""}</strong><small>${fmtT(e.start)}–${fmtT(e.end)}</small>${e.where?`<small> · ${esc(e.where)}</small>`:""}${(()=>{ const t = tripOf(e); if (t && t.out && t.minOut) return `<small> · trajet ${t.minOut} min ${MODES[t.mode]||""}</small>`; const pl = placeFor(e); return pl && pl.minutes ? `<small> · trajet ${pl.minutes} min</small>` : ""; })()}</div>${e.user?`<button class="icon-btn del" type="button" data-act="delev" aria-label="Supprimer ${esc(e.title)}"><svg><use href="#i-trash"/></svg></button>`:"<span></span>"}</li>`;
   });
   if (!evs.length){ el.innerHTML = `<li class="empty" style="display:block">${isTodayList ? "Rien de prévu. Importe ton agenda (Comptes) ou dicte un rendez-vous à l’assistant." : "Aucun événement."}</li>`; return; }
   if (!nowPlaced) html += nowRow;
@@ -1089,9 +1142,15 @@ function renderWeek(){
     head += `<div class="wk-h${td?" today":""}"><span>${DAYS[d.getDay()].slice(0,3)}.</span><b>${d.getDate()}</b></div>`;
     body += `<div class="wk-day${td?" today":""}" style="height:${(H1-H0)*HH}px">`;
     eventsFor(d).forEach(e => {
+      const t = tripOf(e);
+      if (t){
+        const blk = (a, b, label) => { a = clamp(a, H0*60, H1*60); b = clamp(b, H0*60, H1*60); if (b - a < 1) return; const hh = (b-a)/60*HH - 1; body += `<div class="wk-trip${hh < 13 ? " tiny" : ""}" style="top:${(a/60-H0)*HH}px;height:${hh}px" title="${label}">${label}</div>`; };
+        if (t.out && t.minOut) blk(e.start - t.minOut, e.start, `${TRIP_ICON[t.mode]||""} Aller · ${t.minOut} min`);
+        if (t.back && t.minBack) blk(e.end, e.end + t.minBack, `${TRIP_ICON[t.mode]||""} Retour · ${t.minBack} min`);
+      }
       const s = clamp(e.start, H0*60, H1*60), en = clamp(e.end, H0*60, H1*60); if (en <= s) return;
       const top = (s/60-H0)*HH, h = Math.max(22,(en-s)/60*HH-2);
-      body += `<div class="wk-ev ${e.acc}${h<40?" short":""}${e.user?" user":""}${e.id===flashId?" flash":""}" style="top:${top}px;height:${h}px" title="${esc(e.title)} · ${fmtT(e.start)}–${fmtT(e.end)}${e.user?" · ajouté par l'assistant":""}"><b>${e.user?"✦ ":""}${esc(e.title)}</b><small>${fmtT(e.start)}${e.tbc?" · à confirmer":""}</small></div>`;
+      body += `<div class="wk-ev ${e.acc}${h<40?" short":""}${e.user?" user":""}${e.id===flashId?" flash":""}"${e.user?` data-eid="${esc(e.id)}" role="button" tabindex="0"`:""} style="top:${top}px;height:${h}px" title="${esc(e.title)} · ${fmtT(e.start)}–${fmtT(e.end)}${e.user?" · touche pour modifier":""}"><b>${e.user?"✦ ":""}${esc(e.title)}</b><small>${fmtT(e.start)}–${fmtT(e.end)}${e.tbc?" · à confirmer":""}</small></div>`;
     });
     if (td){ const n = nowMin(); if (n/60 > H0 && n/60 < H1) body += `<div class="wk-now" style="top:${(n/60-H0)*HH}px"></div>`; }
     body += `</div>`;
@@ -1382,6 +1441,7 @@ async function applyActions(r, msg){
         const ev = {id:newId("e"), title:cleanTxt(a.title) || "Rendez-vous", date, start, end, where:cleanTxt(a.where, 80), acc:a.account === "perso" ? "perso" : "pro", tbc, src:"assistant", place:["work","gym"].includes(a.place) ? a.place : null, createdAt:new Date().toISOString()};
         const clash = eventsFor(fromIso(date)).filter(x => x.start < ev.end && x.end > ev.start && x.acc !== "focus");
         await saveEvent(ev);
+        autoTrip(ev.id, ev);
         msg.cards.push(addCard({kind:"event", id:ev.id, snap:ev}));
         if (clash.length && !tbc) notes.push(`Attention, ça chevauche « ${clash[0].title} ».`);
       } else if (a.type === "update_event" || a.type === "delete_event"){
@@ -1509,7 +1569,7 @@ function mapsUrl(pl){
 function departuresFor(date, fromNow){
   const buf = +ls.get("buffer", 10), n = nowMin();
   return eventsFor(date).filter(e => e.acc !== "focus" && (!fromNow || e.start > n))
-    .map(e => ({e, p:placeFor(e)})).filter(x => x.p && x.p.minutes > 0)
+    .map(e => ({e, p:tripPlace(e) || placeFor(e)})).filter(x => x.p && x.p.minutes > 0)
     .map(x => ({...x, leave:x.e.start - x.p.minutes - buf}));
 }
 function depRow(d, label){
@@ -1559,6 +1619,158 @@ $("#placeForm").addEventListener("submit", async ev => {
     $("#placeNote").textContent = kind !== "home" && !pl.minutes ? "Lieu ajouté. Indique la durée du trajet (ou ajoute d'abord l'adresse de ton domicile) pour voir l'heure de départ." : estimated ? `Lieu ajouté : environ ${pl.minutes} min ${MODES[mode]} (estimation de l'IA, hors trafic).` : "Lieu ajouté.";
     toast("Lieu enregistré");
   } catch(e){ dbErr(e); } finally { btn.disabled = false; }
+});
+
+/* ---------- Trajet d'un rendez-vous (aller / retour, comme Calendrier) ---------- */
+const TRIP_MODES = [["","Aucun"],["voiture","Voiture"],["transports","Transports"],["velo","Vélo"],["pied","À pied"]];
+const TRIP_ICON = {voiture:"🚗", transports:"🚇", velo:"🚲", pied:"🚶"};
+const OSRM = {voiture:"car", transports:"car", velo:"bike", pied:"foot"};
+const isVisio = w => /teams|zoom|meet|t[ée]l[ée]phone|visio|en ligne|appel/i.test(w || "");
+const tripOf = e => e && e.travel && e.travel.mode && (e.travel.minOut || e.travel.minBack) ? e.travel : null;
+function tripPlace(e){
+  const t = tripOf(e); if (!t || !t.out || !t.minOut) return null;
+  return {name:e.where || e.title, address:e.where || "", minutes:t.minOut, mode:t.mode};
+}
+const geoCache = (() => { const g = ls.get("geo", {}); return g && typeof g === "object" ? g : {}; })();
+async function getJSON(u){ const r = await fetch(u); if (!r.ok) throw new Error("http"); return r.json(); }
+async function geocode(q, near){
+  q = (q || "").trim(); if (q.length < 3) return null;
+  const k = q.toLowerCase(); if (geoCache[k]) return geoCache[k];
+  let pt = null;
+  try {
+    const r = await getJSON("https://api-adresse.data.gouv.fr/search/?limit=1&q=" + encodeURIComponent(q) + (near ? `&lat=${near.lat}&lon=${near.lon}` : ""));
+    const f = r.features && r.features[0];
+    if (f && f.properties.score >= 0.5) pt = {lon:f.geometry.coordinates[0], lat:f.geometry.coordinates[1], label:f.properties.label};
+  } catch(e){}
+  if (!pt){
+    try {
+      const r = await getJSON("https://photon.komoot.io/api/?limit=1&q=" + encodeURIComponent(q) + (near ? `&lat=${near.lat}&lon=${near.lon}` : ""));
+      const f = r.features && r.features[0];
+      if (f){ const p = f.properties; pt = {lon:f.geometry.coordinates[0], lat:f.geometry.coordinates[1], label:[p.name, p.street && (p.housenumber ? p.housenumber + " " : "") + p.street, p.city].filter(Boolean).filter((x,i,a) => a.indexOf(x) === i).join(", ")}; }
+    } catch(e){}
+  }
+  if (pt){ geoCache[k] = pt; const ks = Object.keys(geoCache); if (ks.length > 150) delete geoCache[ks[0]]; ls.set("geo", geoCache); }
+  return pt;
+}
+async function routeLeg(a, b, mode){
+  const r = await getJSON(`https://routing.openstreetmap.de/routed-${OSRM[mode] || "car"}/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`);
+  const rt = r && r.code === "Ok" && r.routes && r.routes[0]; if (!rt) throw new Error("route");
+  const km = rt.distance / 1000;
+  if (mode === "transports"){ const v = km < 3 ? 12 : km < 15 ? 20 : km < 40 ? 30 : 55; return {min:Math.max(5, Math.round(10 + km * 60 / v)), km}; }
+  return {min:Math.max(1, Math.round(rt.duration / 60)), km};
+}
+async function computeTrip(from, to, mode){
+  const a = await geocode(from); if (!a) throw new Error("from");
+  const b = await geocode(to, a); if (!b) throw new Error("to");
+  const [go, back] = await Promise.all([routeLeg(a, b, mode), routeLeg(b, a, mode)]);
+  if (go.km > 1500) throw new Error("far");
+  return {minOut:go.min, minBack:back.min, km:Math.round(go.km * 10) / 10, est:mode === "transports", to:b.label || to};
+}
+const defaultTripMode = () => { const m = ls.get("tripMode", ""); if (OSRM[m]) return m; const h = home(); return h && OSRM[h.mode] ? h.mode : "voiture"; };
+async function autoTrip(id, fallback){
+  const h = home(), e0 = store.events.find(x => x.id === id) || fallback;
+  if (!ls.get("autoTrip", true) || !h || !h.address || !e0 || !e0.where || e0.travel || isVisio(e0.where)) return;
+  const mode = defaultTripMode();
+  try {
+    const r = await computeTrip(h.address, e0.where, mode);
+    const e = store.events.find(x => x.id === id) || (store.mode === "db" ? fallback : null); if (!e || e.travel) return;
+    await saveEvent({...e, travel:{mode, out:true, back:true, minOut:r.minOut, minBack:r.minBack, km:r.km, est:r.est, from:h.address, to:r.to}});
+  } catch(err){}
+}
+
+let evs = null, tripSeq = 0;
+function openEvSheet(id){
+  const e = store.events.find(x => x.id === id); if (!e) return;
+  const t = e.travel || {};
+  evs = {id, mode:t.mode || "", out:t.out !== false, back:t.back !== false, minOut:t.minOut || 0, minBack:t.minBack || 0, km:t.km || 0, est:!!t.est, to:t.to || "", manual:!!t.manual, key:t.mode ? [t.from || "", e.where || "", t.mode].join("|") : "", msg:""};
+  $("#evsTitle").value = e.title || ""; $("#evsDate").value = e.date; $("#evsStart").value = fmtT(e.start); $("#evsEnd").value = fmtT(e.end); $("#evsWhere").value = e.where || "";
+  $("#evsHead").textContent = e.src === "ics" ? "Rendez-vous importé" : "Rendez-vous";
+  const del = $("#evsDel"); del.textContent = "Supprimer"; del.dataset.armed = "";
+  $("#evSheet").hidden = false; renderEvs();
+  if (evs.mode && !evs.minOut && !evs.minBack) runTrip();
+}
+function closeEvSheet(){ $("#evSheet").hidden = true; evs = null; tripSeq++; }
+function tripFrom(){ const h = home(); return h && h.address ? h.address : $("#evsHomeAddr").value.trim(); }
+function renderEvs(){
+  if (!evs) return;
+  $("#evsModes").innerHTML = TRIP_MODES.map(([k, l]) => `<button type="button" data-tmode="${k}" aria-pressed="${evs.mode === k}">${k ? TRIP_ICON[k] + " " : ""}${l}</button>`).join("");
+  $("#evsTrip").hidden = !evs.mode;
+  if (!evs.mode) return;
+  const h = home(), hasHome = !!(h && h.address);
+  $("#evsFrom").innerHTML = hasHome ? `<span>Depuis <b>${esc(h.name || "Domicile")}</b>, retour au même endroit</span><small>${esc(h.address)}</small>` : `<span>D'où pars-tu ? Ton adresse sera enregistrée comme domicile.</span>`;
+  $("#evsHomeAddr").hidden = hasHome;
+  $("#evsOut").checked = evs.out; $("#evsBack").checked = evs.back;
+  if (document.activeElement !== $("#evsMinOut")) $("#evsMinOut").value = evs.minOut || "";
+  if (document.activeElement !== $("#evsMinBack")) $("#evsMinBack").value = evs.minBack || "";
+  const res = $("#evsRes");
+  if (evs.msg) res.innerHTML = esc(evs.msg);
+  else if (evs.minOut || evs.minBack){
+    const note = evs.manual ? "durée saisie à la main" : evs.est ? "estimation, sans les horaires en temps réel des transports" : evs.mode === "voiture" ? "calculé hors trafic" : "itinéraire calculé";
+    res.innerHTML = `${TRIP_ICON[evs.mode]} ${evs.minOut || "–"} min à l'aller · ${evs.minBack || "–"} min au retour<small>${evs.km ? String(evs.km).replace(".", ",") + " km · " : ""}${note}${evs.to && !evs.manual ? " · arrivée : " + esc(evs.to) : ""}</small>`;
+  } else res.textContent = "";
+  const to = $("#evsWhere").value.trim(), from = tripFrom();
+  const map = $("#evsMap"); map.hidden = !to;
+  map.href = "https://maps.apple.com/?" + (from ? "saddr=" + encodeURIComponent(from) + "&" : "") + "daddr=" + encodeURIComponent(to) + "&dirflg=" + (MODE_FLAG[evs.mode] || "d");
+}
+async function runTrip(force){
+  if (!evs || !evs.mode) return;
+  const to = $("#evsWhere").value.trim(), from = tripFrom(), key = [from, to, evs.mode].join("|");
+  if (!to){ evs.msg = "Indique le lieu du rendez-vous pour calculer le trajet."; renderEvs(); return; }
+  if (isVisio(to)){ evs.msg = "Rendez-vous à distance : pas de trajet à prévoir."; renderEvs(); return; }
+  if (!from){ evs.msg = "Ajoute ton adresse de départ ci-dessus."; renderEvs(); return; }
+  if (!force && key === evs.key && (evs.minOut || evs.minBack)){ evs.msg = ""; renderEvs(); return; }
+  const my = ++tripSeq; evs.msg = "Calcul du trajet…"; renderEvs();
+  try {
+    const r = await computeTrip(from, to, evs.mode);
+    if (!evs || my !== tripSeq) return;
+    Object.assign(evs, {minOut:r.minOut, minBack:r.minBack, km:r.km, est:r.est, to:r.to, key, manual:false, msg:""});
+  } catch(err){
+    if (!evs || my !== tripSeq) return;
+    evs.key = ""; evs.msg = err.message === "to" ? "Lieu introuvable. Précise l'adresse (rue, ville) ou indique les durées à la main." : err.message === "from" ? "Adresse de départ introuvable. Vérifie-la." : err.message === "far" ? "Trajet trop long pour être calculé. Indique les durées à la main." : "Calcul impossible pour le moment. Indique les durées à la main.";
+  }
+  renderEvs();
+}
+$("#evsModes").addEventListener("click", ev => {
+  const b = ev.target.closest("[data-tmode]"); if (!b || !evs) return;
+  evs.mode = b.dataset.tmode; evs.msg = "";
+  if (!evs.mode){ renderEvs(); return; }
+  evs.manual = false; renderEvs(); runTrip();
+});
+$("#evsWhere").addEventListener("change", () => { if (evs && evs.mode) runTrip(); else renderEvs(); });
+$("#evsHomeAddr").addEventListener("change", () => runTrip());
+$("#evsOut").addEventListener("change", e => { if (evs) evs.out = e.target.checked; });
+$("#evsBack").addEventListener("change", e => { if (evs) evs.back = e.target.checked; });
+["#evsMinOut", "#evsMinBack"].forEach(sel => $(sel).addEventListener("input", e => {
+  if (!evs) return; const v = clamp(parseInt(e.target.value, 10) || 0, 0, 600);
+  evs[sel === "#evsMinOut" ? "minOut" : "minBack"] = v; evs.manual = true; evs.msg = ""; tripSeq++; renderEvs();
+}));
+$("#evSheet").addEventListener("click", ev => { if (ev.target.id === "evSheet" || ev.target.closest("[data-evs='close']")) closeEvSheet(); });
+document.addEventListener("keydown", ev => {
+  if (ev.key === "Escape" && !$("#evSheet").hidden) closeEvSheet();
+  if ((ev.key === "Enter" || ev.key === " ") && ev.target.matches && ev.target.matches(".wk-ev[data-eid]")){ ev.preventDefault(); openEvSheet(ev.target.dataset.eid); }
+});
+$("#evsDel").addEventListener("click", async ev => {
+  const b = ev.currentTarget; if (!evs) return;
+  if (!b.dataset.armed){ b.dataset.armed = "1"; b.textContent = "Confirmer la suppression"; setTimeout(() => { if (b.isConnected && b.dataset.armed){ b.dataset.armed = ""; b.textContent = "Supprimer"; } }, 3500); return; }
+  const id = evs.id; closeEvSheet();
+  try { await removeEvent(id); toast("Rendez-vous supprimé"); } catch(e){ dbErr(e); }
+});
+$("#evForm").addEventListener("submit", async ev => {
+  ev.preventDefault(); if (!evs) return;
+  const e = store.events.find(x => x.id === evs.id); if (!e){ closeEvSheet(); return; }
+  const title = $("#evsTitle").value.trim() || e.title, date = $("#evsDate").value || e.date;
+  const start = $("#evsStart").value ? toMin($("#evsStart").value) : e.start;
+  let end = $("#evsEnd").value ? toMin($("#evsEnd").value) : e.end; if (end <= start) end = Math.min(start + 60, 24*60 - 1);
+  const where = $("#evsWhere").value.trim().slice(0, 120), from = tripFrom();
+  const travel = evs.mode && (evs.minOut || evs.minBack) ? {mode:evs.mode, out:evs.out, back:evs.back, minOut:evs.minOut || 0, minBack:evs.minBack || 0, km:evs.km || 0, est:!!evs.est, manual:!!evs.manual, from, to:evs.to || ""} : null;
+  const next = {...e, title, date, start, end, where, travel};
+  if (start !== e.start || end !== e.end) next.tbc = false;
+  const btn = $("#evsSave"); btn.disabled = true;
+  try {
+    if (!home() && from && evs.mode) await put("places", {id:newId("p"), name:"Domicile", kind:"home", address:from, mode:evs.mode, minutes:0, createdAt:new Date().toISOString()});
+    if (evs.mode) ls.set("tripMode", evs.mode);
+    await saveEvent(next); flashId = next.id; closeEvSheet(); toast("Rendez-vous mis à jour");
+  } catch(err){ dbErr(err); } finally { btn.disabled = false; }
 });
 
 /* ---------- Muscu ---------- */
@@ -1962,7 +2174,7 @@ document.addEventListener("click", async ev => {
   if (ac){ const k = ac.dataset.ac, cid = ac.dataset.c;
     if (k === "undo") undoCard(cid); else if (k === "see") seeCard(cid); else if (k === "tasks") show("tasks"); else if (k === "gym"){ closeSheet(); show("gym"); } else if (k === "goals"){ closeSheet(); show("goals"); } return; }
   const act = ev.target.closest("[data-act]");
-  if (!act) return;
+  if (!act){ const ee = ev.target.closest(".wk-ev[data-eid], li[data-eid]"); if (ee && !ev.target.closest("a,button")) openEvSheet(ee.dataset.eid); return; }
   const A = act.dataset.act;
   if (A === "gplus" || A === "gminus"){ goalBump(act.closest("[data-goal]").dataset.goal, A === "gplus" ? 1 : -1); return; }
   if (A === "gdel"){
@@ -2027,6 +2239,8 @@ $("#sTone").addEventListener("change", e => ls.set("tone", e.target.value));
 $("#sTmr").addEventListener("change", e => { ls.set("tmr", e.target.checked); renderToday(); });
 $("#sFocus").addEventListener("change", e => { ls.set("focus", e.target.checked); renderToday(); });
 $("#sRoll").checked = ls.get("roll", true);
+$("#sTrip").checked = ls.get("autoTrip", true);
+$("#sTrip").addEventListener("change", e => ls.set("autoTrip", e.target.checked));
 $("#sBuffer").value = String(ls.get("buffer", 10));
 $("#sGoal").value = String(ls.get("gymGoal", 3));
 $("#sRoll").addEventListener("change", e => { ls.set("roll", e.target.checked); if (e.target.checked){ rolled = false; rollover(); } });
@@ -2206,7 +2420,7 @@ async function deleteAccount(btn){
 }
 // Déconnexion : efface aussi la copie locale des données (important sur un ordinateur partagé).
 async function logoutClean(){
-  ["aiBrief","blocks","name"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
+  ["aiBrief","blocks","name","geo","tripMode"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
   resetStore();
   try { await fbAuth.signOut(); } catch(e){}
   try { await fsdb.terminate(); await fsdb.clearPersistence(); } catch(e){}
