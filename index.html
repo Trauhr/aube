@@ -503,6 +503,10 @@ body:has(.evs-back:not([hidden])) .assist,body:has(.evs-back:not([hidden])) .tab
 .gym-form{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr) minmax(0,1.3fr) auto;padding:12px 20px 14px;border-bottom:1px solid var(--line)}
 .gym-form .btn{height:40px;justify-content:center}
 .place-form{grid-template-columns:minmax(0,1fr) 140px minmax(0,1.5fr) 140px 90px auto;border-top:1px solid var(--line)}
+.place-form.editing{background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.pf-btns{display:flex;gap:8px}
+#placeList li.editing{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.place-acts{display:flex;align-items:center;gap:4px}
 
 /* Import */
 .imp-sum{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:16px 20px;font-weight:700;font-size:17px;font-family:var(--f-display)}
@@ -692,6 +696,7 @@ body.locked{overflow:hidden}
   <symbol id="i-dumb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3.5 10v4M6.5 7.5v9M17.5 7.5v9M20.5 10v4M6.5 12h11"/></symbol>
   <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11Z"/><circle cx="12" cy="10" r="2.3"/></symbol>
   <symbol id="i-target" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></symbol>
+  <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
 
   <symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16v-3.6l1.8-4.7A2 2 0 0 1 8.2 6.4h7.6a2 2 0 0 1 1.9 1.3l1.8 4.7V16a1 1 0 0 1-1 1h-14a1 1 0 0 1-1-1ZM4.8 12.2h14.4M7 17v1.8M17 17v1.8"/><circle cx="8" cy="14.5" r=".6" fill="currentColor"/><circle cx="16" cy="14.5" r=".6" fill="currentColor"/></symbol>
@@ -964,9 +969,9 @@ body.locked{overflow:hidden}
                 <div class="field"><label for="pAddr">Adresse</label><input id="pAddr" maxlength="160" placeholder="Ex. 1 parvis de la Défense, Puteaux"></div>
                 <div class="field"><label for="pMode">Transport</label><select id="pMode"><option value="transports">Transports</option><option value="voiture">Voiture</option><option value="velo">Vélo</option><option value="pied">À pied</option></select></div>
                 <div class="field"><label for="pMin">Minutes</label><input id="pMin" type="number" min="1" max="600" placeholder="auto"></div>
-                <button class="btn primary" type="submit" id="pSubmit">Ajouter</button>
+                <span class="pf-btns"><button class="btn ghost" type="button" id="pCancel" hidden>Annuler</button><button class="btn primary" type="submit" id="pSubmit">Ajouter</button></span>
               </form>
-              <p class="brief-note" style="padding:0 20px 16px;margin:0" id="placeNote">Temps de trajet depuis ton domicile. Laisse « Minutes » vide et l'IA l'estimera (hors trafic). Le lien « Itinéraire » ouvre Plans avec le trafic en temps réel.</p>
+              <p class="brief-note" style="padding:0 20px 16px;margin:0" id="placeNote">Temps de trajet depuis ton domicile. Laisse « Minutes » vide : Aube calcule l'itinéraire tout seul. Modifier un lieu met à jour les trajets et les heures de départ partout.</p>
             </article>
           </div>
           <div>
@@ -1765,8 +1770,78 @@ function renderDepartures(){
 function renderPlaces(){
   const order = ["home","work","gym","other"];
   const list = store.places.slice().sort((a,b) => order.indexOf(a.kind) - order.indexOf(b.kind));
-  $("#placeList").innerHTML = list.length ? list.map(pl => `<li data-pid="${esc(pl.id)}"><span style="min-width:0"><b style="font-weight:600">${esc(pl.name)}</b> <span class="chip aube">${KINDS[pl.kind]||"Lieu"}</span><br><small style="color:var(--muted)">${esc(pl.address || "Adresse non renseignée")}</small></span><span style="display:flex;align-items:center;gap:8px;color:var(--muted);white-space:nowrap">${pl.kind === "home" ? "Point de départ" : pl.minutes ? `${pl.minutes} min ${MODES[pl.mode]||""}${pl.estimated ? " · estimé" : ""}` : "Durée inconnue"}<button class="icon-btn del" type="button" data-act="delplace" aria-label="Supprimer ${esc(pl.name)}"><svg><use href="#i-trash"/></svg></button></span></li>`).join("")
+  const busy = id => !!(placeBusy && placeBusy.has(id));
+  $("#placeList").innerHTML = list.length ? list.map(pl => `<li data-pid="${esc(pl.id)}"${pl.id === placeEdit ? ' class="editing"' : ""}><span style="min-width:0"><b style="font-weight:600">${esc(pl.name)}</b> <span class="chip aube">${KINDS[pl.kind]||"Lieu"}</span><br><small style="color:var(--muted)">${esc(pl.address || "Adresse non renseignée")}</small></span><span style="display:flex;align-items:center;gap:8px;color:var(--muted);white-space:nowrap">${busy(pl.id) ? "Calcul…" : pl.kind === "home" ? "Point de départ" : pl.minutes ? `${pl.minutes} min ${MODES[pl.mode]||""}${pl.estimated ? " · estimé" : ""}` : "Durée inconnue"}<span class="place-acts"><button class="icon-btn" type="button" data-act="editplace" aria-label="Modifier ${esc(pl.name)}" title="Modifier"><svg><use href="#i-edit"/></svg></button><button class="icon-btn del" type="button" data-act="delplace" aria-label="Supprimer ${esc(pl.name)}" title="Supprimer"><svg><use href="#i-trash"/></svg></button></span></span></li>`).join("")
     : `<li><span style="color:var(--muted)">Aucun lieu pour l'instant. Commence par ton domicile.</span></li>`;
+}
+var placeEdit = null;
+var placeBusy = new Set();
+function placeFormReset(){
+  placeEdit = null;
+  ["pName","pAddr","pMin"].forEach(id => $("#"+id).value = "");
+  $("#pKind").value = home() ? "work" : "home"; $("#pMode").value = "transports";
+  $("#pSubmit").textContent = "Ajouter"; $("#pCancel").hidden = true; $("#placeForm").classList.remove("editing");
+  renderPlaces();
+}
+function placeEditStart(id){
+  const pl = store.places.find(x => x.id === id); if (!pl) return;
+  placeEdit = id;
+  $("#pName").value = pl.name || ""; $("#pKind").value = pl.kind || "other"; $("#pAddr").value = pl.address || ""; $("#pMode").value = pl.mode || "transports";
+  $("#pMin").value = pl.kind !== "home" && pl.minutes && !pl.estimated ? pl.minutes : "";
+  $("#pSubmit").textContent = "Enregistrer"; $("#pCancel").hidden = false; $("#placeForm").classList.add("editing");
+  $("#placeNote").textContent = `Modification de « ${pl.name} ». Laisse « Minutes » vide pour recalculer le trajet automatiquement.`;
+  renderPlaces();
+  $("#placeForm").scrollIntoView({behavior:"smooth", block:"center"}); setTimeout(() => $("#pName").focus(), 250);
+}
+$("#pCancel").addEventListener("click", () => { placeFormReset(); $("#placeNote").textContent = "Modification annulée."; });
+// temps de trajet domicile → lieu : itinéraire réel, sinon estimation de l'IA
+async function placeMinutes(from, address, mode){
+  try { const r = await computeTrip(from, address, mode); if (r && r.minOut > 0) return r.minOut; } catch(e){}
+  if (sampleFn){
+    try {
+      const r = await sampleFn.json(`Estime le temps de trajet porte à porte ${MODES[mode]} entre « ${from} » et « ${address} », un jour de semaine vers 8 h 30. Réponds uniquement en JSON : {"minutes": nombre entier, "confiance": "haute"|"moyenne"|"faible"}. Si une adresse est vague, donne ta meilleure estimation avec la confiance "faible".`, {modelTier:"default"});
+      const m = parseInt(r && r.minutes, 10); if (m > 0) return clamp(m, 1, 600);
+    } catch(e){}
+  }
+  return 0;
+}
+// le domicile a changé : on recalcule les lieux en automatique et les trajets des rendez-vous à venir
+async function placesCascade(oldHome, newHome){
+  if (!newHome || !newHome.address) return {pl:0, ev:0};
+  const moved = !oldHome || oldHome.address !== newHome.address;
+  let n = 0, np = 0;
+  if (moved){
+    for (const pl of store.places.filter(x => x.kind !== "home" && x.address && (x.estimated || !x.minutes))){
+      placeBusy.add(pl.id); renderPlaces();
+      const m = await placeMinutes(newHome.address, pl.address, pl.mode);
+      placeBusy.delete(pl.id);
+      if (m > 0){ await put("places", {...pl, minutes:m, estimated:true}); np++; }
+    }
+    renderPlaces();
+    const old = oldHome && oldHome.address;
+    const evs2 = store.events.filter(e => e.date >= TODAY_ISO && e.travel && e.travel.mode && !e.travel.manual && e.where && (!old || !e.travel.from || e.travel.from === old));
+    for (const e of evs2){
+      try {
+        const r = await computeTrip(newHome.address, e.where, e.travel.mode);
+        await saveEvent({...e, travel:{...e.travel, minOut:r.minOut, minBack:r.minBack, km:r.km, est:r.est, from:newHome.address, to:r.to}});
+        n++;
+      } catch(err){}
+    }
+  }
+  return {pl:np, ev:n};
+}
+// un lieu (travail, salle…) a changé d'adresse : les rendez-vous qui y renvoient suivent
+async function placeEventsFollow(oldPl, pl){
+  const h = home(); if (!oldPl || !oldPl.address || oldPl.address === pl.address || !pl.address) return {pl:0, ev:0};
+  let n = 0;
+  for (const e of store.events.filter(e => e.date >= TODAY_ISO && e.where && e.where.trim() === oldPl.address.trim())){
+    let next = {...e, where:pl.address};
+    if (e.travel && e.travel.mode && !e.travel.manual && h && h.address){
+      try { const r = await computeTrip(h.address, pl.address, e.travel.mode); next.travel = {...e.travel, minOut:r.minOut, minBack:r.minBack, km:r.km, est:r.est, from:h.address, to:r.to}; } catch(err){}
+    }
+    await saveEvent(next); n++;
+  }
+  return {pl:0, ev:n};
 }
 $("#placeForm").addEventListener("submit", async ev => {
   ev.preventDefault();
@@ -1775,21 +1850,28 @@ $("#placeForm").addEventListener("submit", async ev => {
   let minutes = parseInt($("#pMin").value, 10), estimated = false;
   const btn = $("#pSubmit"); btn.disabled = true;
   try {
-    const h = home();
-    if (kind !== "home" && !(minutes > 0) && sampleFn && h && h.address && address){
-      $("#placeNote").textContent = "L'IA estime le temps de trajet…";
-      try {
-        const r = await sampleFn.json(`Estime le temps de trajet porte à porte ${MODES[mode]} entre « ${h.address} » et « ${address} », un jour de semaine vers 8 h 30. Réponds uniquement en JSON : {"minutes": nombre entier, "confiance": "haute"|"moyenne"|"faible"}. Si une adresse est vague, donne ta meilleure estimation avec la confiance "faible".`, {modelTier:"default"});
-        const m = parseInt(r && r.minutes, 10); if (m > 0){ minutes = clamp(m, 1, 600); estimated = true; }
-      } catch(e){}
+    const before = placeEdit ? store.places.find(x => x.id === placeEdit) : null;
+    const oldHome = home() ? {...home()} : null;
+    const existingHome = kind === "home" ? home() : null;
+    const id = before ? before.id : existingHome ? existingHome.id : newId("p");
+    // un seul domicile : l'ancien devient un lieu ordinaire
+    if (kind === "home" && existingHome && existingHome.id !== id) await put("places", {...existingHome, kind:"other", name:existingHome.name === "Domicile" ? "Ancien domicile" : existingHome.name});
+    const h = kind === "home" ? null : home();
+    if (kind !== "home" && !(minutes > 0) && h && h.address && address){
+      const same = before && before.address === address && before.mode === mode && before.minutes && before.estimated;
+      if (same) { minutes = before.minutes; estimated = true; }
+      else { $("#placeNote").textContent = "Calcul du trajet depuis ton domicile…"; const m = await placeMinutes(h.address, address, mode); if (m > 0){ minutes = m; estimated = true; } }
     }
-    const existing = kind === "home" ? home() : null;
-    const pl = {id: existing ? existing.id : newId("p"), name, kind, address, mode, minutes: kind === "home" ? 0 : (minutes > 0 ? minutes : 0), estimated, createdAt:new Date().toISOString()};
+    const pl = {...(before || {}), id, name, kind, address, mode, minutes: kind === "home" ? 0 : (minutes > 0 ? minutes : 0), estimated, createdAt:(before && before.createdAt) || new Date().toISOString(), updatedAt:new Date().toISOString()};
     await put("places", pl);
-    ["pName","pAddr","pMin"].forEach(id => $("#"+id).value = "");
-    $("#pKind").value = home() ? "work" : "home";
-    $("#placeNote").textContent = kind !== "home" && !pl.minutes ? "Lieu ajouté. Indique la durée du trajet (ou ajoute d'abord l'adresse de ton domicile) pour voir l'heure de départ." : estimated ? `Lieu ajouté : environ ${pl.minutes} min ${MODES[mode]} (estimation de l'IA, hors trafic).` : "Lieu ajouté.";
-    toast("Lieu enregistré");
+    const wasEdit = !!before;
+    placeFormReset();
+    let n = {pl:0, ev:0};
+    if (kind === "home"){ $("#placeNote").textContent = "Domicile enregistré. Mise à jour des trajets…"; n = await placesCascade(oldHome, pl); }
+    else n = await placeEventsFollow(before, pl);
+    $("#placeNote").textContent = kind !== "home" && !pl.minutes ? "Lieu enregistré. Indique la durée du trajet (ou ajoute d'abord l'adresse de ton domicile) pour voir l'heure de départ."
+      : (wasEdit ? "Lieu modifié" : "Lieu ajouté") + (kind !== "home" ? ` : ${pl.minutes} min ${MODES[mode]}${estimated ? " (itinéraire calculé)" : ""}` : "") + (n.pl || n.ev ? ". Mis à jour : " + [n.pl ? `${n.pl} lieu${n.pl > 1 ? "x" : ""}` : "", n.ev ? `${n.ev} rendez-vous` : ""].filter(Boolean).join(" et ") + "." : ".");
+    toast(wasEdit ? "Lieu modifié" : "Lieu enregistré");
   } catch(e){ dbErr(e); } finally { btn.disabled = false; }
 });
 
@@ -2367,7 +2449,8 @@ document.addEventListener("click", async ev => {
   if (A === "gymstop"){ gymStop(); return; }
   if (A === "gymyes"){ try { await put("sessions", {id:newId("g"), date:act.dataset.date, start:+act.dataset.start, minutes:+act.dataset.min, focus:"Full body", src:"agenda", active:false, createdAt:new Date().toISOString()}); toast("Séance comptée"); } catch(e){ dbErr(e); } return; }
   if (A === "delsession"){ try { await drop("sessions", act.closest("[data-gid]").dataset.gid); toast("Séance supprimée"); } catch(e){ dbErr(e); } return; }
-  if (A === "delplace"){ try { await drop("places", act.closest("[data-pid]").dataset.pid); toast("Lieu supprimé"); } catch(e){ dbErr(e); } return; }
+  if (A === "editplace"){ placeEditStart(act.closest("[data-pid]").dataset.pid); return; }
+  if (A === "delplace"){ if (placeEdit === act.closest("[data-pid]").dataset.pid) placeFormReset(); try { await drop("places", act.closest("[data-pid]").dataset.pid); toast("Lieu supprimé"); } catch(e){ dbErr(e); } return; }
   if (act.dataset.act === "delev"){
     const id = act.closest("[data-eid]").dataset.eid;
     try { await removeEvent(id); toast("Rendez-vous supprimé"); } catch(e){ dbErr(e); }
