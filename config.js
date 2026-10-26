@@ -11,5 +11,5 @@ window.AUBE_CONFIG = {
   },
   // Facultatif : adresse de ta passerelle IA Cloudflare (étape 3 du guide).
   // Laisse "" pour utiliser seulement l'analyse automatique, sans IA.
-  aiUrl: ""
+  aiUrl: "https://aube-ia.arthurjung90.workers.dev"
 };
