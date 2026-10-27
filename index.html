@@ -215,6 +215,15 @@ h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance}
 .field{display:flex;flex-direction:column;gap:5px;min-width:0}
 .field label{font-size:12px;color:var(--muted);font-weight:600;padding-left:4px}
 .field input,.field select{border:0;background:var(--fill);border-radius:12px;padding:9px 12px;width:100%;min-width:0;font-size:15px}
+/* iOS : les champs date/heure gardent sinon leur largeur et leur hauteur natives et débordent sur le champ voisin */
+.field input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=file]),.field select,.evs-in{box-sizing:border-box;height:42px;line-height:1.2;max-width:100%}
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;min-width:0;max-width:100%;text-align:left;color:var(--ink)}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:left;margin:0;min-height:1.2em}
+input[type=date]::-webkit-calendar-picker-indicator,input[type=time]::-webkit-calendar-picker-indicator{margin-left:auto}
+.field select{-webkit-appearance:none;appearance:none;padding-right:34px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238E8E93' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m7 9 5-5 5 5M7 15l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;background-size:12px}
+.field{justify-content:flex-end}
+/* iOS zoome la page si le texte d'un champ fait moins de 16 px */
+@media (max-width:900px){.field input,.field select,.field textarea,.evs-in,.feed-form input,.steps-in input,.assist-bar input,.assist-bar textarea{font-size:16px}}
 
 /* Week */
 .week-scroll{overflow-x:auto;border-radius:var(--r)}
@@ -517,6 +526,54 @@ body:has(.evs-back:not([hidden])) .assist,body:has(.evs-back:not([hidden])) .tab
 .gym-form{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr) minmax(0,1.3fr) auto;padding:12px 20px 14px;border-bottom:1px solid var(--line)}
 .gym-form .btn{height:40px;justify-content:center}
 .place-form{grid-template-columns:minmax(0,1fr) 140px minmax(0,1.5fr) 140px 90px auto;border-top:1px solid var(--line)}
+.st-head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:6px 0 12px}
+.st-streaks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}
+.st-streak{padding:14px 16px;display:flex;flex-direction:column;gap:4px}
+.st-streak b{font-family:var(--f-round);font-size:26px;font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+.st-streak b small{font-size:14px;color:var(--muted);font-weight:600;margin-left:3px}
+.st-streak span{font-size:13.5px;color:var(--muted);font-weight:600}
+.st-streak em{font-style:normal;font-size:12px;color:var(--muted)}
+.st-charts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:22px}
+.st-card{padding:16px 16px 12px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.st-card h3{margin:0;font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.st-card h3 i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.st-kpi{font-family:var(--f-round);font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1}
+.st-kpi small{font-family:var(--f);font-size:13px;color:var(--muted);font-weight:500;margin-left:4px}
+.st-plot{position:relative;height:120px;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--line)}
+.st-plot .stb{flex:1 1 0;min-width:0;height:100%;display:flex;align-items:flex-end;cursor:default;border-radius:4px 4px 0 0}
+.st-plot .stb i{display:block;width:100%;border-radius:4px 4px 0 0;background:var(--c);min-height:2px;opacity:.45;transition:opacity .15s}
+.st-plot .stb.ok i{opacity:1}
+.st-plot .stb.zero i{background:var(--track);opacity:1}
+.st-plot .stb:hover i,.st-plot .stb:focus i{filter:brightness(1.08);outline:2px solid color-mix(in srgb,var(--c) 40%,transparent);outline-offset:1px}
+.st-plot .stb:focus{outline:none}
+.st-goal{position:absolute;left:0;right:0;border-top:1.5px dashed color-mix(in srgb,var(--muted) 70%,transparent);pointer-events:none}
+.st-goal span{position:absolute;right:0;top:-17px;font-size:10.5px;color:var(--muted);background:linear-gradient(var(--glass-strong),var(--glass-strong)),var(--bg);padding:0 4px;border-radius:4px}
+.st-axis{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+.st-legend{font-size:12px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.st-legend span{display:inline-flex;align-items:center;gap:5px}
+.st-legend i{width:9px;height:9px;border-radius:3px;background:var(--c)}
+.st-legend i.lo{opacity:.45}
+.st-tip{position:fixed;z-index:500;pointer-events:none;padding:7px 10px;border-radius:10px;font-size:12.5px;line-height:1.35;background:linear-gradient(var(--glass-strong),var(--glass-strong)),var(--bg);box-shadow:0 8px 24px rgba(0,0,0,.16),0 0 0 1px var(--line);color:var(--ink);white-space:nowrap}
+.st-tip b{font-variant-numeric:tabular-nums}
+.st-tip[hidden]{display:none}
+@media (max-width:900px){.st-charts{grid-template-columns:minmax(0,1fr)}.st-streaks{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.net-pill{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);left:50%;transform:translateX(-50%);z-index:450;display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;font-size:13px;font-weight:600;color:var(--ink);background:linear-gradient(var(--glass-strong),var(--glass-strong)),var(--bg);box-shadow:0 8px 24px rgba(0,0,0,.14),0 0 0 1px var(--line);max-width:calc(100vw - 32px)}
+.net-pill i{width:8px;height:8px;border-radius:50%;background:var(--dawn);flex:none}
+.net-pill.sync i{background:var(--accent);animation:fpulse 1.4s ease-in-out infinite}
+.net-pill[hidden]{display:none}
+.feed-box{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.feed-help summary{cursor:pointer;font-size:13px;color:var(--accent);font-weight:600}
+.feed-help ul{margin:8px 0;padding-left:18px;font-size:13px;line-height:1.45;display:flex;flex-direction:column;gap:6px}
+.feed-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.feed-list li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:var(--fill);min-width:0}
+.feed-list li > span{min-width:0;flex:1;display:flex;flex-direction:column}
+.feed-list li b{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-list li small{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.feed-list li small.err{color:var(--danger)}
+.feed-list .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.feed-form{display:grid;grid-template-columns:minmax(0,1fr) 96px auto;gap:8px}
+.feed-form #feedUrl{grid-column:1/-1}
+.feed-form input{border:0;background:var(--fill);border-radius:12px;padding:9px 12px;min-width:0;font-size:14.5px}
 .place-form.editing{background:color-mix(in srgb,var(--accent) 6%,transparent)}
 .pf-btns{display:flex;gap:8px}
 #placeList li.editing{background:color-mix(in srgb,var(--accent) 8%,transparent)}
@@ -713,6 +770,7 @@ body.locked{overflow:hidden}
   <symbol id="i-edit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16v4ZM13.5 6.5l4 4"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11 12 4l8 7M6.5 9.5V20h11V9.5M10 20v-5h4v5"/></symbol>
   <symbol id="i-building" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20V5.5A1.5 1.5 0 0 1 6.5 4h7A1.5 1.5 0 0 1 15 5.5V20M15 10h3.5a1.5 1.5 0 0 1 1.5 1.5V20M3.5 20h17M8.5 8h3M8.5 12h3M8.5 16h3"/></symbol>
+  <symbol id="i-sync" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9M18.5 3v4.2h-4.2M5.5 21v-4.2h4.2"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2.5"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></symbol>
 
   <symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 16v-3.6l1.8-4.7A2 2 0 0 1 8.2 6.4h7.6a2 2 0 0 1 1.9 1.3l1.8 4.7V16a1 1 0 0 1-1 1h-14a1 1 0 0 1-1-1ZM4.8 12.2h14.4M7 17v1.8M17 17v1.8"/><circle cx="8" cy="14.5" r=".6" fill="currentColor"/><circle cx="16" cy="14.5" r=".6" fill="currentColor"/></symbol>
@@ -871,6 +929,9 @@ body.locked{overflow:hidden}
             <div class="brief-actions wide"><button class="btn primary" type="submit" id="oSubmit">Créer l'objectif</button><button class="btn ghost" type="button" id="oCancel">Annuler</button></div>
           </form>
           <div class="grid2" id="goalBuiltin"></div>
+          <div class="st-head"><h2 class="sect" style="margin:0">Tes tendances</h2><div class="seg glass" id="stRange" role="group" aria-label="Période"><button type="button" data-strange="4" aria-pressed="true">4 semaines</button><button type="button" data-strange="12" aria-pressed="false">12 semaines</button></div></div>
+          <div class="st-streaks" id="stStreaks"></div>
+          <div class="st-charts" id="stCharts"></div>
           <div class="assist-sugg" id="goalSugg" style="padding:0"></div>
           <div class="goals-grid" id="goalList"></div>
         </div>
@@ -954,6 +1015,23 @@ body.locked{overflow:hidden}
               <p>Pour les autres agendas, exporte-les au format .ics puis importe-les ici : Calendrier sur Mac (Fichier › Exporter), Google Agenda (Paramètres › Importer et exporter) ou Outlook (Fichier › Enregistrer le calendrier). Les événements des 60 prochains jours rejoignent ton emploi du temps ; réimporter met à jour sans doublon.</p>
               <div class="brief-actions"><label for="icsAcc" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Type d'agenda</label><select id="icsAcc" class="pill-select"><option value="perso">Agenda perso</option><option value="pro">Agenda pro</option></select><label class="btn primary" for="icsFile">Importer un fichier .ics</label><input type="file" id="icsFile" accept=".ics,text/calendar" hidden></div>
               <span class="brief-note" id="icsMsg"></span>
+              <div class="feed-box">
+                <b>S'abonner par lien · synchro automatique</b>
+                <p class="brief-note" style="margin:0">Colle le lien « ICS » de ton agenda : il se met à jour tout seul (lecture seule).</p>
+                <details class="feed-help"><summary>Où trouver ce lien ?</summary><ul>
+                  <li><b>Outlook.com / Microsoft 365</b> : outlook.com › Paramètres › Calendrier › Calendriers partagés › « Publier un calendrier » › choisis « Peut afficher tous les détails » › Publier › copie le lien <b>ICS</b>.</li>
+                  <li><b>Google Agenda</b> : Paramètres › clique sur ton agenda › « Adresse secrète au format iCal ».</li>
+                  <li><b>iCloud (Apple)</b> : app Calendrier › clic droit sur l'agenda › Partager › « Calendrier public » › copie le lien.</li>
+                </ul><span class="brief-note">Ce lien donne accès à ton agenda : ne le partage avec personne d'autre.</span></details>
+                <ul class="feed-list" id="feedList"></ul>
+                <form class="feed-form" id="feedForm" autocomplete="off">
+                  <input id="feedUrl" type="url" inputmode="url" maxlength="1000" placeholder="https://… ou webcal://…" aria-label="Lien ICS de l'agenda" required>
+                  <input id="feedName" maxlength="40" placeholder="Nom (ex. Outlook pro)" aria-label="Nom de l'agenda">
+                  <select id="feedAcc" class="pill-select" aria-label="Type d'agenda"><option value="pro">Pro</option><option value="perso">Perso</option></select>
+                  <button class="btn primary" type="submit" id="feedAdd">S'abonner</button>
+                </form>
+                <span class="brief-note" id="feedMsg"></span>
+              </div>
             </article>
             <article class="card acct">
               <div class="acct-top"><div class="acct-logo" style="background:linear-gradient(180deg,#FFD60A,#FF9F0A)">N</div><div><h2 style="font-size:17px">Apple Notes</h2><span class="status"><i style="background:var(--focus)"></i>Copier-coller</span></div></div>
@@ -1190,6 +1268,7 @@ function eventsFor(date){
   if (typeof focusEvents === "function") focusEvents(d).forEach(x => evs.push(x));
   store.events.filter(e => e.date === d).forEach(e => evs.push({id:e.id, title:e.title, start:e.start, end:e.end, acc:e.acc === "perso" ? "perso" : e.acc === "focus" ? "focus" : "pro", where:e.where || "", user:true, tbc:!!e.tbc, src:e.src||"assistant", place:e.place||null, travel:e.travel||null}));
   msEventsOn(d).forEach(e => evs.push(e));
+  if (typeof feedEventsOn === "function") feedEventsOn(d).forEach(e => evs.push(e));
   return evs.sort((a,b) => a.start-b.start);
 }
 function freeSlots(date, from, lo, hi){
@@ -1351,7 +1430,7 @@ function renderWeek(){
   el.innerHTML = head + body;
   flashId = null;
 }
-function renderAll(){ renderToday(); renderReviewSlot(); renderNotif(); pushPlanSoon(); renderTasks(); renderPlaces(); if (!$("#v-week").hidden) renderWeek(); if (!$("#v-gym").hidden) renderGym(); if (!$("#v-goals").hidden) renderGoals(); renderChat(); }
+function renderAll(){ if (typeof renderFeeds === "function") renderFeeds(); renderToday(); renderReviewSlot(); renderNotif(); pushPlanSoon(); renderTasks(); renderPlaces(); if (!$("#v-week").hidden) renderWeek(); if (!$("#v-gym").hidden) renderGym(); if (!$("#v-goals").hidden) renderGoals(); renderChat(); }
 
 /* ---------- Brief ---------- */
 let aiBrief = null;
@@ -1427,11 +1506,11 @@ Ne mentionne pas le JSON.`;
 /* ---------- Persistance ---------- */
 function toast(msg){ const t = $("#toast"); t.textContent = msg; t.classList.add("on"); clearTimeout(toast._t); toast._t = setTimeout(()=>t.classList.remove("on"), 2600); }
 async function put(kind, obj){
-  if (store.mode === "db"){ const {id, ...body} = obj; await store.cols[kind].doc(id).set(JSON.parse(JSON.stringify(body))); }
+  if (store.mode === "db"){ const {id, ...body} = obj; await netWrite(store.cols[kind].doc(id).set(JSON.parse(JSON.stringify(body)))); }
   else { const arr = store[kind], i = arr.findIndex(x=>x.id===obj.id); if (i>=0) arr[i] = obj; else arr.push(obj); renderAll(); }
 }
 async function drop(kind, id){
-  if (store.mode === "db") await store.cols[kind].doc(id).delete();
+  if (store.mode === "db") await netWrite(store.cols[kind].doc(id).delete());
   else { store[kind] = store[kind].filter(x=>x.id!==id); renderAll(); }
 }
 const saveTask = t => put("tasks", t), removeTask = id => drop("tasks", id);
@@ -2444,6 +2523,7 @@ function builtinCard(title, v, t, unit, col){
   return `<article class="card goal" data-go="gym" style="cursor:pointer"><div class="goal-top"><div class="mini-ring">${ringOne(t ? v/t : 0, col, 11)}</div><div style="min-width:0"><h3>${title}</h3><div class="meta">${catChip("sante")}<span>Suivi dans Forme</span></div></div><span class="goal-val bval" style="font-size:20px">${fmtNum(v)}<small> / ${fmtNum(t)} ${unit}</small></span></div></article>`;
 }
 function renderGoals(){
+  setTimeout(() => { if (typeof renderStats === "function") renderStats(); }, 0);
   const ws = weekStats(MONDAY0);
   $("#goalBuiltin").innerHTML = builtinCard("Pas aujourd'hui", stepsOn(TODAY_ISO) || 0, stepGoal(), "pas", "var(--ring2)") + builtinCard("Muscu cette semaine", ws.count, gymGoal(), "séances", "var(--ring1)");
   const list = store.goals.filter(g => !g.archived).sort((a,b) => Object.keys(CAT_TXT).indexOf(a.cat) - Object.keys(CAT_TXT).indexOf(b.cat) || (a.createdAt < b.createdAt ? -1 : 1));
@@ -2645,12 +2725,12 @@ function makeAI(){
 }
 function resetStore(){
   unsubs.forEach(u => { try { u(); } catch(e){} }); unsubs = [];
-  Object.assign(store, {mode:"loading", tasks:[], events:[], places:[], sessions:[], steps:[], goals:[], focus:[], cols:{}});
+  Object.assign(store, {mode:"loading", tasks:[], events:[], places:[], sessions:[], steps:[], goals:[], focus:[], feeds:[], cols:{}}); try { feedReset(); } catch(e){}
   rolled = false; aiBrief = null; sampleFn = null; msReset();
 }
 function demoMode(){
   resetStore(); inDemo = true;
-  store.mode = "demo"; store.tasks = DEMO_TASKS.map(t=>({...t})); store.places = DEMO_PLACES.map(x=>({...x})); store.sessions = DEMO_SESSIONS(); store.steps = DEMO_STEPS(); store.goals = DEMO_GOALS(); store.focus = [];
+  store.mode = "demo"; store.tasks = DEMO_TASKS.map(t=>({...t})); store.places = DEMO_PLACES.map(x=>({...x})); store.sessions = DEMO_SESSIONS(); store.steps = DEMO_STEPS(); store.goals = DEMO_GOALS(); store.focus = []; store.feeds = [];
   $("#demoPill").hidden = false; $("#briefAi").hidden = true;
   renderAccount(); renderAll(); rollover();
 }
@@ -2658,7 +2738,7 @@ function startCloud(user){
   resetStore(); inDemo = false; currentUser = user;
   $("#demoPill").hidden = true;
   const root = fsdb.collection("users").doc(user.uid);
-  const C = {tasks:"tasks", events:"events", places:"places", sessions:"gym", steps:"steps", goals:"goals", focus:"focus"};
+  const C = {tasks:"tasks", events:"events", places:"places", sessions:"gym", steps:"steps", goals:"goals", focus:"focus", feeds:"feeds"};
   Object.entries(C).forEach(([k, c]) => { store.cols[k] = root.collection(c); });
   Object.keys(C).forEach(k => unsubs.push(store.cols[k].onSnapshot(snap => {
     store[k] = snap.docs.map(d => ({id:d.id, ...d.data()}));
@@ -2668,7 +2748,7 @@ function startCloud(user){
   sampleFn = makeAI(); $("#briefAi").hidden = !sampleFn;
   const c = ls.get("aiBrief", null); aiBrief = c && c.date === TODAY_ISO && c.uid === user.uid ? c.text : null;
   $("#sName").value = userName();
-  renderAccount(); renderAll(); msInit(); notifInit();
+  renderAccount(); renderAll(); msInit(); notifInit(); setTimeout(() => feedSync(false), 1500);
 }
 function renderAccount(){
   const box = $("#acctBox"), panel = $("#acctPanel");
@@ -2752,7 +2832,7 @@ $("#aDemo").addEventListener("click", () => { showAuth(false); demoMode(); });
 
 async function exportData(){
   const data = {application:"Aube", exporteLe:new Date().toISOString(), compte:currentUser ? currentUser.email : null};
-  ["tasks","events","places","sessions","steps","goals","focus"].forEach(k => data[k] = store[k] || []);
+  ["tasks","events","places","sessions","steps","goals","focus","feeds"].forEach(k => data[k] = store[k] || []);
   const url = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], {type:"application/json"}));
   const a = document.createElement("a"); a.href = url; a.download = `aube-${TODAY_ISO}.json`; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 2000);
@@ -2761,7 +2841,7 @@ async function deleteAccount(btn){
   if (!btn.dataset.confirm){ btn.dataset.confirm = "1"; btn.textContent = "Confirmer la suppression"; setTimeout(() => { if (btn.isConnected){ delete btn.dataset.confirm; btn.textContent = "Supprimer"; } }, 4000); return; }
   btn.disabled = true; btn.textContent = "Suppression…";
   try {
-    for (const k of ["tasks","events","places","sessions","steps","goals","focus"]) for (const d of (store[k] || []).slice()) await store.cols[k].doc(d.id).delete();
+    for (const k of ["tasks","events","places","sessions","steps","goals","focus","feeds"]) for (const d of (store[k] || []).slice()) await store.cols[k].doc(d.id).delete();
     await currentUser.delete();
     toast("Compte et données supprimés.");
     setTimeout(logoutClean, 1200);
@@ -2772,7 +2852,7 @@ async function deleteAccount(btn){
 }
 // Déconnexion : efface aussi la copie locale des données (important sur un ordinateur partagé).
 async function logoutClean(){
-  ["aiBrief","blocks","name","geo","geo2","tripMode","iphKey","iphOn","msCache","notif","reviewSeen","focusGoal"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
+  ["aiBrief","blocks","name","geo","geo2","tripMode","iphKey","iphOn","msCache","notif","reviewSeen","focusGoal","feedCache","stRange"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
   resetStore();
   try { await fbAuth.signOut(); } catch(e){}
   try { await fsdb.terminate(); await fsdb.clearPersistence(); } catch(e){}
@@ -3396,6 +3476,268 @@ document.addEventListener("click", ev => {
 });
 $("#sFocusGoal").value = String(focusGoalMin());
 $("#sFocusGoal").addEventListener("change", e => { ls.set("focusGoal", +e.target.value); renderAll(); });
+
+/* ---------- Statistiques sur la durée ---------- */
+var stRange = +ls.get("stRange", 4) === 12 ? 12 : 4;
+function stFmtH(m){ return m >= 60 ? Math.floor(m / 60) + " h" + (m % 60 ? " " + pad(m % 60) : "") : m + " min"; }
+function stDays(n){ var out = []; for (var i = n - 1; i >= 0; i--) out.push(addDays(TODAY, -i)); return out; }
+function stWeeks(n){ var out = []; for (var i = n - 1; i >= 0; i--) out.push(addDays(MONDAY0, -7 * i)); return out; }
+function stWeekLabel(mon){ return mon.getDate() + " " + MON_ABBR[mon.getMonth()]; }
+function stPlot(bars, goal, color, unitFmt, axis){
+  var max = Math.max(goal || 0, ...bars.map(b => b.v)) * 1.12 || 1;
+  var html = bars.map((b, i) => `<div class="stb${b.v <= 0 ? " zero" : goal && b.v >= goal ? " ok" : ""}" tabindex="0" data-tip="${esc(b.tip)}" aria-label="${esc(b.tip)}"><i style="height:${b.v <= 0 ? 2 : Math.max(3, b.v / max * 100)}%"></i></div>`).join("");
+  var gl = goal ? `<div class="st-goal" style="bottom:${goal / max * 100}%"><span>objectif ${unitFmt(goal)}</span></div>` : "";
+  return `<div class="st-plot" style="--c:${color}" role="img" aria-label="Histogramme">${html}${gl}</div><div class="st-axis"><span>${axis[0]}</span><span>${axis[1]}</span></div>`;
+}
+function stStreakDays(test, skipWeekend){
+  // série en cours : jours d'affilée à l'objectif (aujourd'hui compte s'il est déjà atteint ; le week-end ne casse pas la série de focus)
+  var cur = 0, best = 0, run = 0, inCur = true;
+  for (var i = 0; i < 400; i++){
+    var d = addDays(TODAY, -i), ok = test(iso(d)), skip = !ok && (i === 0 || (skipWeekend && (d.getDay() === 0 || d.getDay() === 6)));
+    if (skip) continue;
+    if (ok){ run++; if (inCur) cur = run; best = Math.max(best, run); }
+    else { inCur = false; run = 0; }
+  }
+  return {cur, best};
+}
+function stStreakWeeks(test){
+  var cur = 0, best = 0, run = 0, inCur = true;
+  for (var i = 0; i < 60; i++){
+    var ok = test(addDays(MONDAY0, -7 * i));
+    if (i === 0 && !ok) continue;
+    if (ok){ run++; if (inCur) cur = run; best = Math.max(best, run); }
+    else { inCur = false; run = 0; }
+  }
+  return {cur, best};
+}
+function renderStats(){
+  var box = document.getElementById("stCharts"); if (!box) return;
+  document.querySelectorAll("#stRange [data-strange]").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.strange === stRange)));
+  var fGoal = focusGoalMin(), sGoal = stepGoal(), gGoal = gymGoal(), weeks = stWeeks(stRange);
+  var gymWeek = mon => weekStats(mon).count;
+  // séries
+  var sStreak = stStreakDays(d => (stepsOn(d) || 0) >= sGoal, false);
+  var fStreak = stStreakDays(d => focusMinOn(d) >= fGoal, true);
+  var gStreak = stStreakWeeks(mon => gymWeek(mon) >= gGoal);
+  var lo = iso(addDays(MONDAY0, -7 * (stRange - 1))), hi = iso(addDays(MONDAY0, 6));
+  var tasksDone = store.tasks.filter(t => t.done && (t.doneAt ? t.doneAt.slice(0, 10) : t.due || "") >= lo && (t.doneAt ? t.doneAt.slice(0, 10) : t.due || "") <= hi).length;
+  var tile = (v, unit, label, best) => `<div class="card st-streak"><b>${v}<small>${unit}</small></b><span>${label}</span>${best ? `<em>Record : ${best}</em>` : ""}</div>`;
+  $("#stStreaks").innerHTML =
+    tile(sStreak.cur, sStreak.cur > 1 ? "jours" : "jour", "d'affilée à l'objectif de pas", sStreak.best > sStreak.cur ? sStreak.best + " j" : "") +
+    tile(fStreak.cur, fStreak.cur > 1 ? "jours" : "jour", "d'affilée à l'objectif de focus", fStreak.best > fStreak.cur ? fStreak.best + " j" : "") +
+    tile(gStreak.cur, gStreak.cur > 1 ? "sem." : "sem.", "d'affilée à l'objectif muscu", gStreak.best > gStreak.cur ? gStreak.best + " sem." : "") +
+    tile(tasksDone, tasksDone > 1 ? "tâches" : "tâche", `faites en ${stRange} semaines`, "");
+  var cards = [];
+  // focus
+  if (stRange === 4){
+    var days = stDays(28), fb = days.map(d => { var m = focusMinOn(iso(d)); return {v:m, tip:`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} : ${m ? stFmtH(m) : "aucun focus"}`}; });
+    var ftot = fb.reduce((s, b) => s + b.v, 0);
+    cards.push({t:"Focus", c:"var(--dawn)", kpi:`${stFmtH(ftot)}<small>en 4 semaines · ${stFmtH(Math.round(ftot / 4))} / sem.</small>`, plot:stPlot(fb, fGoal, "var(--dawn)", stFmtH, [shortDate(days[0]), "aujourd'hui"]), leg:"jour"});
+  } else {
+    var fw = weeks.map(mon => { var m = focusRange(iso(mon), iso(addDays(mon, 6))); return {v:m, tip:`Semaine du ${stWeekLabel(mon)} : ${m ? stFmtH(m) : "aucun focus"}`}; });
+    var ftot2 = fw.reduce((s, b) => s + b.v, 0);
+    cards.push({t:"Focus", c:"var(--dawn)", kpi:`${stFmtH(ftot2)}<small>en 12 semaines · ${stFmtH(Math.round(ftot2 / 12))} / sem.</small>`, plot:stPlot(fw, fGoal * 5, "var(--dawn)", stFmtH, ["sem. du " + stWeekLabel(weeks[0]), "cette semaine"]), leg:"semaine (objectif × 5 jours)"});
+  }
+  // pas
+  if (stRange === 4){
+    var days2 = stDays(28), sb = days2.map(d => { var v = stepsOn(iso(d)) || 0; return {v, tip:`${DAYS[d.getDay()]} ${d.getDate()} ${MONTHS[d.getMonth()]} : ${v ? fmtNum(v) + " pas" : "pas de donnée"}`}; });
+    var known = sb.filter(b => b.v > 0), avg = known.length ? Math.round(known.reduce((s, b) => s + b.v, 0) / known.length) : 0;
+    cards.push({t:"Pas", c:"var(--ring2)", kpi:`${avg ? fmtNum(avg) : "–"}<small>pas par jour en moyenne · ${known.filter(b => b.v >= sGoal).length}/${known.length || 0} j à l'objectif</small>`, plot:stPlot(sb, sGoal, "var(--ring2)", v => fmtNum(v), [shortDate(days2[0]), "aujourd'hui"]), leg:"jour"});
+  } else {
+    var sw = weeks.map(mon => { var vals = []; for (var i = 0; i < 7; i++){ var v = stepsOn(iso(addDays(mon, i))); if (v) vals.push(v); } var a = vals.length ? Math.round(vals.reduce((x, y) => x + y, 0) / vals.length) : 0; return {v:a, tip:`Semaine du ${stWeekLabel(mon)} : ${a ? fmtNum(a) + " pas/jour" : "pas de donnée"}`}; });
+    var kn = sw.filter(b => b.v > 0), avg2 = kn.length ? Math.round(kn.reduce((s, b) => s + b.v, 0) / kn.length) : 0;
+    cards.push({t:"Pas", c:"var(--ring2)", kpi:`${avg2 ? fmtNum(avg2) : "–"}<small>pas par jour en moyenne</small>`, plot:stPlot(sw, sGoal, "var(--ring2)", v => fmtNum(v), ["sem. du " + stWeekLabel(weeks[0]), "cette semaine"]), leg:"moyenne par jour, chaque semaine"});
+  }
+  // muscu (toujours par semaine)
+  var gw = weeks.map(mon => { var ws = weekStats(mon); return {v:ws.count, tip:`Semaine du ${stWeekLabel(mon)} : ${ws.count} séance${ws.count > 1 ? "s" : ""}${ws.minutes ? " · " + stFmtH(ws.minutes) : ""}`}; });
+  var gtot = gw.reduce((s, b) => s + b.v, 0), gok = gw.filter(b => b.v >= gGoal).length;
+  cards.push({t:"Muscu", c:"var(--ring1)", kpi:`${gtot}<small>séance${gtot > 1 ? "s" : ""} · ${gok}/${stRange} sem. à l'objectif</small>`, plot:stPlot(gw, gGoal, "var(--ring1)", v => v + " / sem.", ["sem. du " + stWeekLabel(weeks[0]), "cette semaine"]), leg:"semaine"});
+  box.innerHTML = cards.map(c => `<article class="card st-card"><h3><i style="background:${c.c}"></i>${c.t}</h3><div class="st-kpi">${c.kpi}</div>${c.plot}<div class="st-legend" style="--c:${c.c}"><span><i></i>objectif atteint</span><span><i class="lo"></i>en dessous</span><span>· 1 barre = 1 ${c.leg}</span></div></article>`).join("");
+}
+(function(){
+  var tip = document.createElement("div"); tip.className = "st-tip"; tip.hidden = true; document.body.appendChild(tip);
+  var show = el => { var r = el.getBoundingClientRect(); tip.textContent = el.dataset.tip; tip.hidden = false; var w = tip.offsetWidth; tip.style.left = Math.max(8, Math.min(innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px"; tip.style.top = Math.max(8, r.top - tip.offsetHeight - 8) + "px"; };
+  document.addEventListener("pointerover", ev => { var b = ev.target.closest && ev.target.closest(".st-plot .stb"); if (b) show(b); else tip.hidden = true; });
+  document.addEventListener("focusin", ev => { var b = ev.target.closest && ev.target.closest(".st-plot .stb"); if (b) show(b); });
+  document.addEventListener("focusout", () => { tip.hidden = true; });
+  window.addEventListener("scroll", () => { tip.hidden = true; }, true);
+  $("#stRange").addEventListener("click", ev => { var b = ev.target.closest("[data-strange]"); if (!b) return; stRange = +b.dataset.strange; ls.set("stRange", stRange); renderStats(); });
+})();
+
+/* ---------- Hors connexion ---------- */
+var netPending = 0;
+// Firestore enregistre tout de suite en local et envoie au serveur dès que le réseau revient :
+// on n'attend donc pas la confirmation du serveur plus de 2,5 s pour ne pas bloquer l'interface.
+function netWrite(p){
+  var settled = false;
+  var done = p.then(() => { settled = true; }, e => { settled = true; throw e; });
+  return Promise.race([done, new Promise(res => setTimeout(res, navigator.onLine ? 2500 : 60))]).then(() => {
+    if (!settled){ netPending++; renderNet(); done.then(() => { netPending = Math.max(0, netPending - 1); renderNet(); }, e => { netPending = Math.max(0, netPending - 1); renderNet(); dbErr(e); }); }
+  });
+}
+function renderNet(){
+  var el = document.getElementById("netPill");
+  if (!el){ el = document.createElement("div"); el.id = "netPill"; el.className = "net-pill"; el.setAttribute("role", "status"); el.hidden = true; document.body.appendChild(el); }
+  var off = !navigator.onLine;
+  if (off){ el.className = "net-pill"; el.innerHTML = `<i></i>Hors connexion · tes changements seront synchronisés au retour du réseau`; el.hidden = false; }
+  else if (netPending > 0){ el.className = "net-pill sync"; el.innerHTML = `<i></i>Synchronisation…`; el.hidden = false; }
+  else el.hidden = true;
+}
+window.addEventListener("offline", renderNet);
+window.addEventListener("online", async () => {
+  renderNet();
+  try {
+    if (typeof fsdb !== "undefined" && fsdb && fsdb.waitForPendingWrites){
+      var had = netPending > 0; await fsdb.waitForPendingWrites(); netPending = 0; renderNet();
+      if (had) toast("Connexion rétablie : tout est synchronisé.");
+    }
+  } catch(e){}
+  try { if (typeof msInit === "function" && typeof currentUser !== "undefined" && currentUser) msInit(); } catch(e){}
+});
+renderNet();
+
+/* ---------- Agendas abonnés par lien ICS ---------- */
+var feedState = feedState || {byDate:{}, status:{}, busy:false, timer:null, mem:null};
+function feedReset(){ feedState = {byDate:{}, status:{}, busy:false, timer:null, mem:null}; }
+function feedCacheGet(){ if (feedState && feedState.mem) return feedState.mem; var c = ls.get("feedCache", {}); c = c && typeof c === "object" ? c : {}; if (feedState) feedState.mem = c; return c; }
+function feedCacheSet(c){ if (feedState) feedState.mem = c; try { ls.set("feedCache", c); } catch(e){} }
+function feedEventsOn(d){ return ((feedState && feedState.byDate[d]) || []).map(e => ({...e})); }
+function feedIndex(){
+  if (!feedState) feedReset();
+  var cache = feedCacheGet(), ids = new Set((store.feeds || []).map(f => f.id)), by = {};
+  Object.keys(cache).forEach(id => { if (!ids.has(id)) return; var f = (store.feeds || []).find(x => x.id === id); (cache[id].events || []).forEach(e => { var x = {...e, acc:f && f.acc === "perso" ? "perso" : "pro", src:"feed", ext:true, feed:id}; (by[e.date] = by[e.date] || []).push(x); }); });
+  Object.values(by).forEach(l => l.sort((a, b) => a.start - b.start));
+  feedState.byDate = by;
+}
+// lecture d'un fichier ICS avec ses paramètres (TZID, VALUE=DATE…) et les propriétés répétées (EXDATE)
+function feedParse(txt){
+  var lines = txt.replace(/\r?\n[ \t]/g, "").split(/\r?\n/), out = [], cur = null, depth = 0;
+  for (var ln of lines){
+    if (ln === "BEGIN:VEVENT"){ cur = {exdate:[]}; depth = 0; continue; }
+    if (ln === "END:VEVENT"){ if (cur) out.push(cur); cur = null; continue; }
+    if (!cur) continue;
+    if (/^BEGIN:/.test(ln)){ depth++; continue; } if (/^END:/.test(ln)){ depth--; continue; } if (depth > 0) continue;
+    var i = ln.indexOf(":"); if (i < 0) continue;
+    var head = ln.slice(0, i).split(";"), name = head[0].toUpperCase(), val = ln.slice(i + 1);
+    var params = {}; head.slice(1).forEach(p => { var j = p.indexOf("="); if (j > 0) params[p.slice(0, j).toUpperCase()] = p.slice(j + 1).replace(/"/g, ""); });
+    if (name === "EXDATE") val.split(",").forEach(v => cur.exdate.push(v));
+    else if (!(name in cur)) cur[name] = val, cur[name + "_P"] = params;
+  }
+  return out;
+}
+function feedDur(v){ var m = (v || "").match(/^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?/); if (!m) return 0; return ((+m[1] || 0) * 7 * 1440) + ((+m[2] || 0) * 1440) + ((+m[3] || 0) * 60) + (+m[4] || 0); }
+function feedExpand(raw, lo, hi){
+  var res = [], overrides = new Set(), WD = {SU:0, MO:1, TU:2, WE:3, TH:4, FR:5, SA:6};
+  raw.forEach(r => { if (r["RECURRENCE-ID"]){ var x = icsDate(r["RECURRENCE-ID"]); if (x) overrides.add((r.UID || "") + "|" + x.date.getTime()); } });
+  for (var r of raw){
+    if (/CANCELLED/i.test(r.STATUS || "")) continue;
+    var st = icsDate(r.DTSTART); if (!st || st.allDay) continue;
+    var en = icsDate(r.DTEND), dur = en && !en.allDay ? Math.round((en.date - st.date) / 60000) : (feedDur(r.DURATION) || 60);
+    if (!(dur > 0)) dur = 30;
+    var ex = new Set(r.exdate.map(v => { var x = icsDate(v); return x ? x.date.getTime() : 0; }));
+    var occ = [];
+    if (r.RRULE && !r["RECURRENCE-ID"]){
+      var R = {}; r.RRULE.split(";").forEach(p => { var a = p.split("="); R[a[0].toUpperCase()] = a[1]; });
+      var iv = Math.max(1, +R.INTERVAL || 1), count = +R.COUNT || 0, until = R.UNTIL ? icsDate(R.UNTIL) : null, untilT = until ? until.date.getTime() + (until.allDay ? 86399999 : 0) : Infinity;
+      var byday = (R.BYDAY || "").split(",").map(x => WD[x.replace(/^[+-]?\d+/, "")]).filter(x => x != null);
+      var n = 0, guard = 0, base = new Date(st.date);
+      var push = d => { if (d < st.date) return true; if (d.getTime() > untilT || (count && n >= count) || d > hi) return false; n++; occ.push(new Date(d)); return true; };
+      if (R.FREQ === "WEEKLY"){
+        var days = byday.length ? byday : [base.getDay()];
+        var wk = new Date(base); wk.setDate(wk.getDate() - ((wk.getDay() + 6) % 7));
+        if (!count){ var skipW = Math.floor((lo - wk) / (7 * iv * 86400000)) - 1; if (skipW > 0) wk.setDate(wk.getDate() + skipW * 7 * iv); }
+        outer: while (guard++ < 800){
+          for (var k = 0; k < 7; k++){
+            var d = new Date(wk); d.setDate(wk.getDate() + k); d.setHours(base.getHours(), base.getMinutes(), 0, 0);
+            if (!days.includes(d.getDay())) continue;
+            if (!push(d)) break outer;
+          }
+          wk.setDate(wk.getDate() + 7 * iv);
+        }
+      } else if (R.FREQ === "DAILY" || R.FREQ === "MONTHLY" || R.FREQ === "YEARLY"){
+        var d2 = new Date(base);
+        if (!count && R.FREQ === "DAILY"){ var skipD = Math.floor((lo - d2) / (iv * 86400000)) - 1; if (skipD > 0) d2.setDate(d2.getDate() + skipD * iv); }
+        while (guard++ < 1500){
+          if (!(R.FREQ === "DAILY" && byday.length && !byday.includes(d2.getDay()))){ if (!push(d2)) break; }
+          if (R.FREQ === "DAILY") d2.setDate(d2.getDate() + iv);
+          else if (R.FREQ === "MONTHLY") d2.setMonth(d2.getMonth() + iv);
+          else d2.setFullYear(d2.getFullYear() + iv);
+        }
+      } else occ.push(new Date(st.date));
+    } else occ.push(new Date(st.date));
+    for (var o of occ){
+      if (ex.has(o.getTime())) continue;
+      if (!r["RECURRENCE-ID"] && overrides.has((r.UID || "") + "|" + o.getTime())) continue;
+      var day = new Date(o); day.setHours(0, 0, 0, 0);
+      if (day < lo || day > hi) continue;
+      var s = o.getHours() * 60 + o.getMinutes(), e2 = s + dur; if (e2 >= 24 * 60) e2 = 24 * 60 - 1; if (e2 <= s) e2 = Math.min(s + 30, 24 * 60 - 1);
+      res.push({id:"fd" + hashStr((r.UID || icsText(r.SUMMARY)) + "|" + iso(day) + "|" + s), title:icsText(r.SUMMARY).slice(0, 120) || "Événement", date:iso(day), start:s, end:e2, where:icsText(r.LOCATION).slice(0, 80)});
+    }
+  }
+  var seen = {}; return res.filter(e => seen[e.id] ? false : (seen[e.id] = 1)).slice(0, 1500);
+}
+async function feedSyncOne(f){
+  if (!feedState) feedReset();
+  feedState.status[f.id] = {busy:true}; renderFeeds();
+  try {
+    var d = await msCall("/ics/fetch", {url:f.url});
+    var evs = feedExpand(feedParse(d.text || ""), addDays(TODAY, -14), addDays(TODAY, 120));
+    var cache = feedCacheGet(); cache[f.id] = {at:Date.now(), events:evs}; feedCacheSet(cache);
+    feedState.status[f.id] = {ok:true, n:evs.length, at:Date.now()};
+  } catch(e){
+    feedState.status[f.id] = {err:e && e.error === "format" ? "Ce lien ne renvoie pas un agenda ICS." : e && e.error === "url" ? "Lien invalide (il doit commencer par https:// ou webcal://)." : e && e.status === 401 ? "Session expirée : reconnecte-toi." : !navigator.onLine ? "Hors connexion : dernière version gardée." : "Agenda injoignable pour le moment."};
+  }
+}
+async function feedSync(force){
+  if (!feedState) feedReset();
+  if (feedState.busy || !(typeof currentUser !== "undefined" && currentUser) || store.mode === "demo" || !iphBase()) { feedIndex(); return; }
+  feedState.busy = true;
+  try {
+    var cache = feedCacheGet();
+    for (var f of (store.feeds || [])){ if (force || !cache[f.id] || Date.now() - cache[f.id].at > 15 * 60000) await feedSyncOne(f); }
+    // nettoie le cache des agendas supprimés
+    var ids = new Set((store.feeds || []).map(f => f.id)); Object.keys(cache = feedCacheGet()).forEach(id => { if (!ids.has(id)) delete cache[id]; }); feedCacheSet(cache);
+  } finally { feedState.busy = false; feedIndex(); renderAll(); }
+}
+function renderFeeds(){
+  var el = document.getElementById("feedList"); if (!el) return;
+  if (!feedState) feedReset();
+  feedIndex();
+  var cache = feedCacheGet();
+  el.innerHTML = (store.feeds || []).map(f => {
+    var st = feedState.status[f.id] || {}, c = cache[f.id];
+    var line = st.busy ? "Synchronisation…" : st.err ? st.err : c ? `${c.events.length} événement${c.events.length > 1 ? "s" : ""} · à jour à ${fmtT(new Date(c.at).getHours() * 60 + new Date(c.at).getMinutes())}` : "En attente de synchro";
+    return `<li data-fid="${esc(f.id)}"><i class="dot" style="background:var(--${f.acc === "perso" ? "perso" : "pro"})"></i><span><b>${esc(f.name || "Agenda")}</b><small${st.err ? ' class="err"' : ""}>${esc(line)}</small></span><button class="icon-btn" type="button" data-feed="sync" title="Actualiser" aria-label="Actualiser ${esc(f.name || "l'agenda")}"><svg><use href="#i-sync"/></svg></button><button class="icon-btn del" type="button" data-feed="del" title="Se désabonner" aria-label="Se désabonner de ${esc(f.name || "l'agenda")}"><svg><use href="#i-trash"/></svg></button></li>`;
+  }).join("");
+}
+$("#feedForm").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  var url = $("#feedUrl").value.trim(), name = $("#feedName").value.trim(), acc = $("#feedAcc").value, msg = $("#feedMsg");
+  if (!(typeof currentUser !== "undefined" && currentUser)){ msg.textContent = "Connecte-toi pour t'abonner à un agenda."; return; }
+  if (!/^(https?|webcals?):\/\/\S+\.\S+/i.test(url)){ msg.textContent = "Colle un lien qui commence par https:// ou webcal://."; return; }
+  if ((store.feeds || []).some(f => f.url === url)){ msg.textContent = "Tu es déjà abonné à cet agenda."; return; }
+  if (!name) name = /outlook|office365|live\.com/i.test(url) ? "Outlook" : /google/i.test(url) ? "Google Agenda" : /icloud/i.test(url) ? "iCloud" : "Agenda";
+  var f = {id:newId("fd"), url, name, acc, createdAt:new Date().toISOString()};
+  $("#feedAdd").disabled = true;
+  try {
+    await put("feeds", f);
+    $("#feedUrl").value = ""; $("#feedName").value = "";
+    msg.textContent = "Abonnement ajouté. Lecture de l'agenda…";
+    await feedSyncOne(f); feedIndex(); renderAll();
+    var st = feedState.status[f.id] || {};
+    if (st.err && !st.n && navigator.onLine){ await drop("feeds", f.id); var c0 = feedCacheGet(); delete c0[f.id]; feedCacheSet(c0); delete feedState.status[f.id]; renderAll(); $("#feedUrl").value = url; msg.textContent = st.err + " L'abonnement n'a pas été ajouté."; return; }
+    msg.textContent = st.err ? st.err : `${st.n} événement${st.n > 1 ? "s" : ""} ajouté${st.n > 1 ? "s" : ""} à ton emploi du temps. Mise à jour automatique toutes les 15 minutes.`;
+  } catch(e){ dbErr(e); } finally { $("#feedAdd").disabled = false; }
+});
+$("#feedList").addEventListener("click", async ev => {
+  var b = ev.target.closest("[data-feed]"); if (!b) return;
+  var id = b.closest("[data-fid]").dataset.fid, f = (store.feeds || []).find(x => x.id === id); if (!f) return;
+  if (b.dataset.feed === "sync"){ await feedSyncOne(f); feedIndex(); renderAll(); return; }
+  if (!b.dataset.armed){ b.dataset.armed = "1"; b.title = "Toucher encore pour confirmer"; toast("Touche encore la poubelle pour te désabonner."); setTimeout(() => { if (b.isConnected) delete b.dataset.armed; }, 4000); return; }
+  try { await drop("feeds", id); var c = feedCacheGet(); delete c[id]; feedCacheSet(c); feedIndex(); renderAll(); toast("Désabonné de « " + (f.name || "l'agenda") + " »"); } catch(e){ dbErr(e); }
+});
+setInterval(() => { if (document.visibilityState === "visible") feedSync(false); }, 5 * 60000);
+document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") feedSync(false); });
 })();
 </script>
 </body>
