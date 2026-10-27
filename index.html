@@ -3681,12 +3681,12 @@ async function feedSyncOne(f){
   if (!feedState) feedReset();
   feedState.status[f.id] = {busy:true}; renderFeeds();
   try {
-    var d = await msCall("/ics/fetch", {url:f.url});
+    var d = await Promise.race([msCall("/ics/fetch", {url:f.url}), new Promise((_, rej) => setTimeout(() => rej({error:"timeout"}), 35000))]);
     var evs = feedExpand(feedParse(d.text || ""), addDays(TODAY, -14), addDays(TODAY, 120));
     var cache = feedCacheGet(); cache[f.id] = {at:Date.now(), events:evs}; feedCacheSet(cache);
     feedState.status[f.id] = {ok:true, n:evs.length, at:Date.now()};
   } catch(e){
-    feedState.status[f.id] = {err:e && e.error === "format" ? "Ce lien ne renvoie pas un agenda ICS." : e && e.error === "url" ? "Lien invalide (il doit commencer par https:// ou webcal://)." : e && e.status === 401 ? "Session expirée : reconnecte-toi." : !navigator.onLine ? "Hors connexion : dernière version gardée." : "Agenda injoignable pour le moment."};
+    feedState.status[f.id] = {fatal:!!(e && (e.error === "format" || e.error === "url")), err:e && e.error === "format" ? "Ce lien ne renvoie pas un agenda ICS." : e && e.error === "url" ? "Lien invalide (il doit commencer par https:// ou webcal://)." : e && e.error === "timeout" ? "L'agenda ne répond pas encore (un calendrier tout juste publié peut mettre quelques minutes). Nouvel essai automatique." : e && e.status === 401 ? "Session expirée : reconnecte-toi." : !navigator.onLine ? "Hors connexion : dernière version gardée." : "Agenda injoignable pour le moment.", t:Date.now()};
   }
 }
 async function feedSync(force){
@@ -3695,7 +3695,7 @@ async function feedSync(force){
   feedState.busy = true;
   try {
     var cache = feedCacheGet();
-    for (var f of (store.feeds || [])){ if (force || !cache[f.id] || Date.now() - cache[f.id].at > 15 * 60000) await feedSyncOne(f); }
+    for (var f of (store.feeds || [])){ var stt = feedState.status[f.id] || {}; if (force || !cache[f.id] || Date.now() - cache[f.id].at > 15 * 60000 || (stt.err && Date.now() - (stt.t || 0) > 3 * 60000)) await feedSyncOne(f); }
     // nettoie le cache des agendas supprimés
     var ids = new Set((store.feeds || []).map(f => f.id)); Object.keys(cache = feedCacheGet()).forEach(id => { if (!ids.has(id)) delete cache[id]; }); feedCacheSet(cache);
   } finally { feedState.busy = false; feedIndex(); renderAll(); }
@@ -3726,7 +3726,7 @@ $("#feedForm").addEventListener("submit", async ev => {
     msg.textContent = "Abonnement ajouté. Lecture de l'agenda…";
     await feedSyncOne(f); feedIndex(); renderAll();
     var st = feedState.status[f.id] || {};
-    if (st.err && !st.n && navigator.onLine){ await drop("feeds", f.id); var c0 = feedCacheGet(); delete c0[f.id]; feedCacheSet(c0); delete feedState.status[f.id]; renderAll(); $("#feedUrl").value = url; msg.textContent = st.err + " L'abonnement n'a pas été ajouté."; return; }
+    if (st.err && st.fatal){ await drop("feeds", f.id); var c0 = feedCacheGet(); delete c0[f.id]; feedCacheSet(c0); delete feedState.status[f.id]; renderAll(); $("#feedUrl").value = url; msg.textContent = st.err + " L'abonnement n'a pas été ajouté."; return; }
     msg.textContent = st.err ? st.err : `${st.n} événement${st.n > 1 ? "s" : ""} ajouté${st.n > 1 ? "s" : ""} à ton emploi du temps. Mise à jour automatique toutes les 15 minutes.`;
   } catch(e){ dbErr(e); } finally { $("#feedAdd").disabled = false; }
 });
