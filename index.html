@@ -1444,7 +1444,8 @@ function localBrief(){
   const name = userName(), withTmr = ls.get("tmr", true), withFocus = ls.get("focus", true);
   const real = evs.filter(e=>e.acc!=="focus"), lines = [];
   lines.push(`${name ? name + ", v" : "V"}oici ton ${longDate(TODAY)}.`);
-  if (real.length) lines.push(`Agenda : ${real.length} rendez-vous. Le premier, « ${real[0].title} », commence à ${fmtT(real[0].start)}${real.length>1 ? `, le dernier se termine à ${fmtT(real[real.length-1].end)}` : ""}.`);
+  if (real.length === 1) lines.push(`Agenda : « ${real[0].title} » de ${fmtT(real[0].start)} à ${fmtT(real[0].end)}.`);
+  else if (real.length) lines.push(`Agenda : ${real.length} rdv, de ${fmtT(real[0].start)} à ${fmtT(real[real.length-1].end)}. On commence par « ${real[0].title} ».`);
   else lines.push("Agenda : aucun rendez-vous, la journée est à toi.");
   if (todo.length) lines.push(`Priorités :\n${todo.slice(0,3).map(t => `• ${t.title}${isLate(t)?" (en retard)":""}`).join("\n")}`);
   else lines.push("Aucune tâche prévue aujourd'hui.");
@@ -1460,7 +1461,7 @@ function localBrief(){
   if (stY != null) lines.push(`Pas : ${fmtNum(stY)} hier${stY >= stepGoal() ? ", objectif atteint" : ` sur ${fmtNum(stepGoal())}`}. Objectif du jour : ${fmtNum(stepGoal())}.`);
   const open = store.goals.filter(g => !g.archived).map(g => ({g, ...goalValue(g)})).filter(o => o.t && o.v < o.t);
   if (open.length) lines.push(`Objectifs : ${open.slice(0,3).map(o => o.g.kind === "list" ? `${o.g.title} (${o.v}/${o.t} étapes)` : `${o.g.title} ${fmtNum(o.v)}/${fmtNum(o.t)} ${o.g.unit||""} ${PERIOD_TXT[o.g.period]||""}`.replace(/\s+/g," ").trim()).join(" ; ")}.`);
-  if (withTmr){ const t = tmrEv.filter(e=>e.acc!=="focus"); lines.push(t.length ? `Demain : ${t.length} rendez-vous, premier à ${fmtT(t[0].start)} (${t[0].title}).` : "Demain : agenda libre."); }
+  if (withTmr){ const t = tmrEv.filter(e=>e.acc!=="focus"); lines.push(t.length === 1 ? `Demain : « ${t[0].title} » à ${fmtT(t[0].start)}.` : t.length ? `Demain : ${t.length} rdv, dès ${fmtT(t[0].start)} avec « ${t[0].title} ».` : "Demain : agenda libre."); }
   return lines.join("\n\n");
 }
 let sampleFn = null;
