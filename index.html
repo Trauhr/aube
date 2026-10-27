@@ -3680,13 +3680,14 @@ function feedExpand(raw, lo, hi){
 async function feedSyncOne(f){
   if (!feedState) feedReset();
   feedState.status[f.id] = {busy:true}; renderFeeds();
+  var slowT = setTimeout(() => { if (feedState.status[f.id] && feedState.status[f.id].busy){ feedState.status[f.id].slow = true; renderFeeds(); } }, 8000);
   try {
-    var d = await Promise.race([msCall("/ics/fetch", {url:f.url}), new Promise((_, rej) => setTimeout(() => rej({error:"timeout"}), 35000))]);
+    var d = await Promise.race([msCall("/ics/fetch", {url:f.url}), new Promise((_, rej) => setTimeout(() => rej({error:"timeout"}), 150000))]);
     var evs = feedExpand(feedParse(d.text || ""), addDays(TODAY, -14), addDays(TODAY, 120));
     var cache = feedCacheGet(); cache[f.id] = {at:Date.now(), events:evs}; feedCacheSet(cache);
-    feedState.status[f.id] = {ok:true, n:evs.length, at:Date.now()};
+    feedState.status[f.id] = {ok:true, n:evs.length, at:Date.now()}; clearTimeout(slowT);
   } catch(e){
-    feedState.status[f.id] = {fatal:!!(e && (e.error === "format" || e.error === "url")), err:e && e.error === "format" ? "Ce lien ne renvoie pas un agenda ICS." : e && e.error === "url" ? "Lien invalide (il doit commencer par https:// ou webcal://)." : e && e.error === "timeout" ? "L'agenda ne répond pas encore (un calendrier tout juste publié peut mettre quelques minutes). Nouvel essai automatique." : e && e.status === 401 ? "Session expirée : reconnecte-toi." : !navigator.onLine ? "Hors connexion : dernière version gardée." : "Agenda injoignable pour le moment.", t:Date.now()};
+    feedState.status[f.id] = {fatal:!!(e && (e.error === "format" || e.error === "url")), err:e && e.error === "format" ? "Ce lien ne renvoie pas un agenda ICS." : e && e.error === "url" ? "Lien invalide (il doit commencer par https:// ou webcal://)." : e && e.error === "timeout" ? "L'agenda ne répond pas pour le moment. Nouvel essai automatique dans quelques minutes." : e && e.status === 401 ? "Session expirée : reconnecte-toi." : !navigator.onLine ? "Hors connexion : dernière version gardée." : "Agenda injoignable pour le moment.", t:Date.now()}; clearTimeout(slowT);
   }
 }
 async function feedSync(force){
@@ -3707,7 +3708,7 @@ function renderFeeds(){
   var cache = feedCacheGet();
   el.innerHTML = (store.feeds || []).map(f => {
     var st = feedState.status[f.id] || {}, c = cache[f.id];
-    var line = st.busy ? "Synchronisation…" : st.err ? st.err : c ? `${c.events.length} événement${c.events.length > 1 ? "s" : ""} · à jour à ${fmtT(new Date(c.at).getHours() * 60 + new Date(c.at).getMinutes())}` : "En attente de synchro";
+    var line = st.busy ? (st.slow ? "Première lecture : Outlook peut mettre jusqu'à 2 minutes…" : "Synchronisation…") : st.err ? st.err : c ? `${c.events.length} événement${c.events.length > 1 ? "s" : ""} · à jour à ${fmtT(new Date(c.at).getHours() * 60 + new Date(c.at).getMinutes())}` : "En attente de synchro";
     return `<li data-fid="${esc(f.id)}"><i class="dot" style="background:var(--${f.acc === "perso" ? "perso" : "pro"})"></i><span><b>${esc(f.name || "Agenda")}</b><small${st.err ? ' class="err"' : ""}>${esc(line)}</small></span><button class="icon-btn" type="button" data-feed="sync" title="Actualiser" aria-label="Actualiser ${esc(f.name || "l'agenda")}"><svg><use href="#i-sync"/></svg></button><button class="icon-btn del" type="button" data-feed="del" title="Se désabonner" aria-label="Se désabonner de ${esc(f.name || "l'agenda")}"><svg><use href="#i-trash"/></svg></button></li>`;
   }).join("");
 }
