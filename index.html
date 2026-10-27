@@ -3606,7 +3606,7 @@ function feedEventsOn(d){ return ((feedState && feedState.byDate[d]) || []).map(
 function feedIndex(){
   if (!feedState) feedReset();
   var cache = feedCacheGet(), ids = new Set((store.feeds || []).map(f => f.id)), by = {};
-  Object.keys(cache).forEach(id => { if (!ids.has(id)) return; var f = (store.feeds || []).find(x => x.id === id); (cache[id].events || []).forEach(e => { var x = {...e, acc:f && f.acc === "perso" ? "perso" : "pro", src:"feed", ext:true, feed:id}; (by[e.date] = by[e.date] || []).push(x); }); });
+  Object.keys(cache).forEach(id => { if (!ids.has(id)) return; var f = (store.feeds || []).find(x => x.id === id); (cache[id].events || []).forEach(e => { var x = {...e, title:feedTitle(e.title), acc:f && f.acc === "perso" ? "perso" : "pro", src:"feed", ext:true, feed:id}; (by[e.date] = by[e.date] || []).push(x); }); });
   Object.values(by).forEach(l => l.sort((a, b) => a.start - b.start));
   feedState.byDate = by;
 }
@@ -3625,6 +3625,12 @@ function feedParse(txt){
     else if (!(name in cur)) cur[name] = val, cur[name + "_P"] = params;
   }
   return out;
+}
+// « [MESIFI593326]Stochastic processes [TD]NIETO Benoit » → « Stochastic processes »
+function feedTitle(t){
+  var x = String(t || "").replace(/^\s*(\[[^\]]*\]\s*)+/, "");
+  var y = x.replace(/\s*\[[^\]]*\].*$/, "").replace(/\s+[-–·|]\s*$/, "").trim();
+  return y || x.trim() || String(t || "");
 }
 function feedDur(v){ var m = (v || "").match(/^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?/); if (!m) return 0; return ((+m[1] || 0) * 7 * 1440) + ((+m[2] || 0) * 1440) + ((+m[3] || 0) * 60) + (+m[4] || 0); }
 function feedExpand(raw, lo, hi){
@@ -3672,7 +3678,7 @@ function feedExpand(raw, lo, hi){
       var day = new Date(o); day.setHours(0, 0, 0, 0);
       if (day < lo || day > hi) continue;
       var s = o.getHours() * 60 + o.getMinutes(), e2 = s + dur; if (e2 >= 24 * 60) e2 = 24 * 60 - 1; if (e2 <= s) e2 = Math.min(s + 30, 24 * 60 - 1);
-      res.push({id:"fd" + hashStr((r.UID || icsText(r.SUMMARY)) + "|" + iso(day) + "|" + s), title:icsText(r.SUMMARY).slice(0, 120) || "Événement", date:iso(day), start:s, end:e2, where:icsText(r.LOCATION).slice(0, 80)});
+      res.push({id:"fd" + hashStr((r.UID || icsText(r.SUMMARY)) + "|" + iso(day) + "|" + s), title:feedTitle(icsText(r.SUMMARY)).slice(0, 120) || "Événement", full:icsText(r.SUMMARY).slice(0, 160), date:iso(day), start:s, end:e2, where:icsText(r.LOCATION).slice(0, 80)});
     }
   }
   var seen = {}; return res.filter(e => seen[e.id] ? false : (seen[e.id] = 1)).slice(0, 1500);
