@@ -3606,7 +3606,7 @@ function feedEventsOn(d){ return ((feedState && feedState.byDate[d]) || []).map(
 function feedIndex(){
   if (!feedState) feedReset();
   var cache = feedCacheGet(), ids = new Set((store.feeds || []).map(f => f.id)), by = {};
-  Object.keys(cache).forEach(id => { if (!ids.has(id)) return; var f = (store.feeds || []).find(x => x.id === id); (cache[id].events || []).forEach(e => { var x = {...e, title:feedTitle(e.title), acc:f && f.acc === "perso" ? "perso" : "pro", src:"feed", ext:true, feed:id}; (by[e.date] = by[e.date] || []).push(x); }); });
+  Object.keys(cache).forEach(id => { if (!ids.has(id)) return; var f = (store.feeds || []).find(x => x.id === id); (cache[id].events || []).forEach(e => { var x = {...e, title:feedTitle(e.title), where:feedWhere(e.where), room:e.where || "", acc:f && f.acc === "perso" ? "perso" : "pro", src:"feed", ext:true, feed:id}; (by[e.date] = by[e.date] || []).push(x); }); });
   Object.values(by).forEach(l => l.sort((a, b) => a.start - b.start));
   feedState.byDate = by;
 }
@@ -3631,6 +3631,19 @@ function feedTitle(t){
   var x = String(t || "").replace(/^\s*(\[[^\]]*\]\s*)+/, "");
   var y = x.replace(/\s*\[[^\]]*\].*$/, "").replace(/\s+[-–·|]\s*$/, "").trim();
   return y || x.trim() || String(t || "");
+}
+// salles du Pôle Léonard de Vinci : « TERR-415 (39) » → « Salle 415 · Campus des Terrasses, 32 rue des 3 Fontanot, 92000 Nanterre »
+var CAMPUS = {
+  TERR:{name:"Campus des Terrasses", addr:"32 rue des 3 Fontanot, 92000 Nanterre"},
+  PARC:{name:"Campus du Parc", addr:"29 allée le Corbusier, 92000 Nanterre"},
+  ARCHE:{name:"Campus de l'Arche", addr:"47 boulevard de Pesaro, 92000 Nanterre"},
+  CYBER:{name:"Campus Cyber", addr:"5-7 rue Bellini, 92800 Puteaux"}
+};
+function feedWhere(w){
+  var m = String(w || "").match(/^\s*(TERR|PARC|ARCHE|CYBER)\b[\s-]*([A-Za-z]?\d+[A-Za-z]?)?/i);
+  if (!m) return w || "";
+  var c = typeof CAMPUS === "object" && CAMPUS ? CAMPUS[m[1].toUpperCase()] : null; if (!c) return w || "";
+  return (m[2] ? "Salle " + m[2] + " · " : "") + c.name + ", " + c.addr;
 }
 function feedDur(v){ var m = (v || "").match(/^P(?:(\d+)W)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?)?/); if (!m) return 0; return ((+m[1] || 0) * 7 * 1440) + ((+m[2] || 0) * 1440) + ((+m[3] || 0) * 60) + (+m[4] || 0); }
 function feedExpand(raw, lo, hi){
