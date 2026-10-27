@@ -574,6 +574,12 @@ body:has(.evs-back:not([hidden])) .assist,body:has(.evs-back:not([hidden])) .tab
 .feed-form{display:grid;grid-template-columns:minmax(0,1fr) 96px auto;gap:8px}
 .feed-form #feedUrl{grid-column:1/-1}
 .feed-form input{border:0;background:var(--fill);border-radius:12px;padding:9px 12px;min-width:0;font-size:14.5px}
+.wg-card{padding:18px 20px;display:flex;flex-direction:column;gap:12px}
+.wg-top{display:flex;gap:16px;align-items:center}
+.wg-prev{flex:none;width:128px;height:128px;border-radius:24px;padding:12px;color:#fff;display:flex;flex-direction:column;gap:2px;background:linear-gradient(160deg,#2E5BB8,#6A5FC8 60%,#E8955A);box-shadow:0 8px 20px rgba(46,91,184,.3)}
+.wg-prev b{font-size:12px}.wg-prev span{font-size:10px;opacity:.7;margin-top:auto}.wg-prev i{font-style:normal;font-weight:700;font-size:13.5px;line-height:1.15}.wg-prev small{font-size:10.5px;opacity:.8}
+.wg-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4}
+@media (max-width:520px){.wg-prev{width:96px;height:96px;border-radius:20px;padding:10px}.wg-prev i{font-size:12px}}
 .place-form.editing{background:color-mix(in srgb,var(--accent) 6%,transparent)}
 .pf-btns{display:flex;gap:8px}
 #placeList li.editing{background:color-mix(in srgb,var(--accent) 8%,transparent)}
@@ -1054,6 +1060,18 @@ body.locked{overflow:hidden}
             <article class="card"><ul class="settings" id="acctPanel"></ul></article>
           </div>
           <div>
+            <div class="group-title">Widget iPhone</div>
+            <article class="card wg-card">
+              <div class="wg-top"><div class="wg-prev" aria-hidden="true"><b>Aube</b><span>Prochain</span><i>Stochastic processes</i><small>13:30 · Salle 415</small></div>
+              <div><h2 style="font-size:17px;margin:0 0 4px">Ton agenda sur l'écran d'accueil</h2><p class="brief-note" style="margin:0">Prochains cours et rendez-vous, tâches du jour, pas et focus, mis à jour tout seul. Il passe par l'app gratuite <b>Scriptable</b>.</p></div></div>
+              <ol class="wg-steps">
+                <li>Installe <b>Scriptable</b> depuis l'App Store (gratuit).</li>
+                <li>Touche <b>Copier le script</b> ci-dessous, sur ton iPhone.</li>
+                <li>Dans Scriptable : <b>+</b> en haut à droite, colle le script, renomme-le « Aube » (en haut), puis <b>OK</b>.</li>
+                <li>Sur l'écran d'accueil : appui long › <b>+</b> › Scriptable › taille moyenne › <b>Ajouter</b>. Appui long sur le widget › <b>Modifier le widget</b> › Script : <b>Aube</b>.</li>
+              </ol>
+              <div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn primary" type="button" id="wgCopy">Copier le script</button><button class="btn" type="button" id="wgNew" hidden>Nouvelle clé</button><span class="brief-note" id="wgMsg"></span></div>
+            </article>
             <div class="group-title">Lieux et trajets</div>
             <article class="card">
               <ul class="settings" id="placeList"></ul>
@@ -1398,6 +1416,20 @@ function renderTasks(){
 }
 
 let flashId = null;
+// rendez-vous qui se chevauchent (trajets compris) : côte à côte, comme dans Calendrier
+function wkLayout(evs){
+  const items = evs.map((e, i) => { const t = tripOf(e); return {i, a:e.start - (t && t.out ? t.minOut || 0 : 0), b:Math.max(e.end, e.start + 15) + (t && t.back ? t.minBack || 0 : 0)}; })
+    .sort((x, y) => x.a - y.a || (y.b - y.a) - (x.b - x.a));
+  const res = []; let cluster = [], cols = [], end = -1;
+  const flush = () => { const n = cols.length; cluster.forEach(it => { res[it.i] = {col:it.col, n}; }); cluster = []; cols = []; end = -1; };
+  items.forEach(it => {
+    if (cluster.length && it.a >= end) flush();
+    let c = cols.findIndex(x => x <= it.a);
+    if (c < 0){ c = cols.length; cols.push(it.b); } else cols[c] = it.b;
+    it.col = c; cluster.push(it); end = Math.max(end, it.b);
+  });
+  flush(); return res;
+}
 function renderWeek(){
   msEnsure();
   const HH = 44, H0 = 7, H1 = 23, el = $("#week");
@@ -1413,16 +1445,18 @@ function renderWeek(){
     const d = addDays(mon,i), td = iso(d) === TODAY_ISO;
     head += `<div class="wk-h${td?" today":""}"><span>${DAYS[d.getDay()].slice(0,3)}.</span><b>${d.getDate()}</b></div>`;
     body += `<div class="wk-day${td?" today":""}" style="height:${(H1-H0)*HH}px">`;
-    eventsFor(d).forEach(e => {
-      const t = tripOf(e);
+    const dayEvs = eventsFor(d), lay = wkLayout(dayEvs);
+    dayEvs.forEach((e, ei) => {
+      const t = tripOf(e), L = lay[ei] || {col:0, n:1};
+      const pos = L.n > 1 ? `left:calc(${(L.col*100/L.n).toFixed(3)}% + 2px);right:auto;width:calc(${(100/L.n).toFixed(3)}% - 4px);` : "";
       if (t){
-        const blk = (a, b, label) => { a = clamp(a, H0*60, H1*60); b = clamp(b, H0*60, H1*60); if (b - a < 1) return; const hh = (b-a)/60*HH - 1; body += `<div class="wk-trip ${e.acc}${hh < 13 ? " tiny" : ""}" style="top:${(a/60-H0)*HH}px;height:${hh}px" title="${label} ${MODES[t.mode]||""}">${tripIco(t.mode)}<span>${label}</span></div>`; };
+        const blk = (a, b, label) => { a = clamp(a, H0*60, H1*60); b = clamp(b, H0*60, H1*60); if (b - a < 1) return; const hh = (b-a)/60*HH - 1; body += `<div class="wk-trip ${e.acc}${hh < 13 ? " tiny" : ""}" style="${pos}top:${(a/60-H0)*HH}px;height:${hh}px" title="${label} ${MODES[t.mode]||""}">${tripIco(t.mode)}<span>${label}</span></div>`; };
         if (t.out && t.minOut) blk(e.start - t.minOut, e.start, `Aller · ${t.minOut} min`);
         if (t.back && t.minBack) blk(e.end, e.end + t.minBack, `Retour · ${t.minBack} min`);
       }
       const s = clamp(e.start, H0*60, H1*60), en = clamp(e.end, H0*60, H1*60); if (en <= s) return;
       const top = (s/60-H0)*HH, h = Math.max(22,(en-s)/60*HH-2);
-      body += `<div class="wk-ev ${e.acc}${h<40?" short":""}${e.user?" user":""}${e.id===flashId?" flash":""}"${e.user?` data-eid="${esc(e.id)}" role="button" tabindex="0"`:""} style="top:${top}px;height:${h}px" title="${esc(e.title)} · ${fmtT(e.start)}–${fmtT(e.end)}${e.where?" · "+esc(e.where):""}${e.user?" · touche pour modifier":""}"><b>${esc(e.title)}</b><small>${fmtT(e.start)}–${fmtT(e.end)}${e.tbc?" · à confirmer":""}</small>${e.where?`<small class="wk-where"><svg class="ti" aria-hidden="true"><use href="#i-pin"/></svg>${esc(isVisio(e.where)||/^https?:/i.test(e.where)?"Visio":e.where.split(",")[0])}</small>`:""}</div>`;
+      body += `<div class="wk-ev ${e.acc}${h<40?" short":""}${e.user?" user":""}${e.id===flashId?" flash":""}"${e.user?` data-eid="${esc(e.id)}" role="button" tabindex="0"`:""} style="${pos}top:${top}px;height:${h}px" title="${esc(e.title)} · ${fmtT(e.start)}–${fmtT(e.end)}${e.where?" · "+esc(e.where):""}${e.user?" · touche pour modifier":""}"><b>${esc(e.title)}</b><small>${fmtT(e.start)}–${fmtT(e.end)}${e.tbc?" · à confirmer":""}</small>${e.where?`<small class="wk-where"><svg class="ti" aria-hidden="true"><use href="#i-pin"/></svg>${esc(isVisio(e.where)||/^https?:/i.test(e.where)?"Visio":e.where.split(",")[0])}</small>`:""}</div>`;
     });
     if (td){ const n = nowMin(); if (n/60 > H0 && n/60 < H1) body += `<div class="wk-now" style="top:${(n/60-H0)*HH}px"></div>`; }
     body += `</div>`;
@@ -1430,7 +1464,7 @@ function renderWeek(){
   el.innerHTML = head + body;
   flashId = null;
 }
-function renderAll(){ if (typeof renderFeeds === "function") renderFeeds(); renderToday(); renderReviewSlot(); renderNotif(); pushPlanSoon(); renderTasks(); renderPlaces(); if (!$("#v-week").hidden) renderWeek(); if (!$("#v-gym").hidden) renderGym(); if (!$("#v-goals").hidden) renderGoals(); renderChat(); }
+function renderAll(){ if (typeof renderFeeds === "function") renderFeeds(); if (typeof wgPushSoon === "function") wgPushSoon(); renderToday(); renderReviewSlot(); renderNotif(); pushPlanSoon(); renderTasks(); renderPlaces(); if (!$("#v-week").hidden) renderWeek(); if (!$("#v-gym").hidden) renderGym(); if (!$("#v-goals").hidden) renderGoals(); renderChat(); }
 
 /* ---------- Brief ---------- */
 let aiBrief = null;
@@ -2853,7 +2887,7 @@ async function deleteAccount(btn){
 }
 // Déconnexion : efface aussi la copie locale des données (important sur un ordinateur partagé).
 async function logoutClean(){
-  ["aiBrief","blocks","name","geo","geo2","tripMode","iphKey","iphOn","msCache","notif","reviewSeen","focusGoal","feedCache","stRange"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
+  ["aiBrief","blocks","name","geo","geo2","tripMode","iphKey","iphOn","msCache","notif","reviewSeen","focusGoal","feedCache","stRange","wgKey","wgOn"].forEach(x => { try { localStorage.removeItem("aube." + x); } catch(e){} });
   resetStore();
   try { await fbAuth.signOut(); } catch(e){}
   try { await fsdb.terminate(); await fsdb.clearPersistence(); } catch(e){}
@@ -3759,6 +3793,55 @@ $("#feedList").addEventListener("click", async ev => {
 });
 setInterval(() => { if (document.visibilityState === "visible") feedSync(false); }, 5 * 60000);
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") feedSync(false); });
+
+/* ---------- Widget iPhone (Scriptable) ---------- */
+var WG_SCRIPT = "// Aube · widget pour iPhone (app gratuite Scriptable)\n// Ce script lit ton résumé Aube et l'affiche sur l'écran d'accueil.\nconst KEY = \"__KEY__\";\nconst API = \"__API__/widget?key=\" + KEY;\nconst SITE = \"__SITE__\";\n\nconst fm = FileManager.local();\nconst cachePath = fm.joinPath(fm.documentsDirectory(), \"aube-widget.json\");\nlet data = null;\ntry {\n  const req = new Request(API);\n  req.timeoutInterval = 15;\n  data = await req.loadJSON();\n  if (data && data.days) fm.writeString(cachePath, JSON.stringify(data));\n} catch (e) {}\nif (!data || !data.days) {\n  try { data = JSON.parse(fm.readString(cachePath)); } catch (e) { data = null; }\n}\n\nconst fam = config.widgetFamily || \"medium\";\nconst now = new Date();\nconst pad = n => String(n).padStart(2, \"0\");\nconst iso = d => d.getFullYear() + \"-\" + pad(d.getMonth() + 1) + \"-\" + pad(d.getDate());\nconst hm = m => pad(Math.floor(m / 60)) + \":\" + pad(m % 60);\nconst nowMin = now.getHours() * 60 + now.getMinutes();\nconst todayIso = iso(now);\nconst JOURS = [\"dim.\", \"lun.\", \"mar.\", \"mer.\", \"jeu.\", \"ven.\", \"sam.\"];\nconst MOIS = [\"janv.\", \"févr.\", \"mars\", \"avr.\", \"mai\", \"juin\", \"juil.\", \"août\", \"sept.\", \"oct.\", \"nov.\", \"déc.\"];\nconst COL = { pro: new Color(\"#7FB3FF\"), perso: new Color(\"#FF8FA8\"), focus: new Color(\"#7BE39A\") };\nconst ink = new Color(\"#FFFFFF\"), soft = new Color(\"#FFFFFF\", 0.78), faint = new Color(\"#FFFFFF\", 0.6);\n\nconst w = new ListWidget();\nconst g = new LinearGradient();\ng.colors = [new Color(\"#2E5BB8\"), new Color(\"#6A5FC8\"), new Color(\"#E8955A\")];\ng.locations = [0, 0.6, 1];\nw.backgroundGradient = g;\nw.url = SITE;\nw.setPadding(14, 14, 12, 14);\nw.refreshAfterDate = new Date(Date.now() + 15 * 60000);\n\nfunction text(stack, str, size, color, weight) {\n  const t = stack.addText(str);\n  t.textColor = color || ink;\n  t.font = weight === \"bold\" ? Font.boldSystemFont(size) : weight === \"semi\" ? Font.semiboldSystemFont(size) : Font.systemFont(size);\n  t.lineLimit = 1;\n  return t;\n}\n\n// en-tête : soleil levant + date\nconst head = w.addStack();\nhead.centerAlignContent();\ntext(head, \"Aube\", 13, ink, \"bold\");\nhead.addSpacer();\ntext(head, JOURS[now.getDay()] + \" \" + now.getDate() + \" \" + MOIS[now.getMonth()], 12, soft, \"semi\");\nw.addSpacer(8);\n\nconst empty = !data || !data.days;\nif (empty) {\n  text(w, \"Ouvre Aube une fois\", 14, ink, \"semi\");\n  text(w, \"pour remplir le widget.\", 12, soft);\n  data = { days: [] };\n}\n\n// prochains rendez-vous (à partir de maintenant)\nconst upcoming = [];\nfor (const day of data.days) {\n  for (const e of day.ev || []) {\n    if (day.d < todayIso || (day.d === todayIso && e.e <= nowMin)) continue;\n    upcoming.push({ ...e, d: day.d });\n  }\n}\nconst label = e => e.d === todayIso ? \"\" : (() => { const dd = new Date(e.d + \"T12:00:00\"); const diff = Math.round((dd - new Date(todayIso + \"T12:00:00\")) / 86400000); return diff === 1 ? \"Demain \" : JOURS[dd.getDay()] + \" \"; })();\n\nfunction eventRow(stack, e, big) {\n  const row = stack.addStack();\n  row.centerAlignContent();\n  const bar = row.addStack();\n  bar.size = new Size(3, big ? 34 : 22);\n  bar.backgroundColor = COL[e.c] || COL.pro;\n  bar.cornerRadius = 2;\n  row.addSpacer(7);\n  const col = row.addStack();\n  col.layoutVertically();\n  const live = e.d === todayIso && e.s <= nowMin;\n  text(col, e.t, big ? 15 : 12.5, ink, \"semi\");\n  text(col, (live ? \"En cours · jusqu'à \" + hm(e.e) : label(e) + hm(e.s) + \"–\" + hm(e.e)) + (e.w ? \" · \" + e.w : \"\"), big ? 11.5 : 10.5, soft);\n}\n\nconst nTodo = (data.tasks && data.tasks.n) || 0;\nconst steps = data.steps || {};\n\nif (empty) {\n  // rien de plus à afficher\n} else if (fam === \"small\") {\n  if (upcoming[0]) {\n    text(w, upcoming[0].d === todayIso && upcoming[0].s <= nowMin ? \"En cours\" : \"Prochain\", 11, faint, \"semi\");\n    w.addSpacer(3);\n    const t = w.addText(upcoming[0].t); t.textColor = ink; t.font = Font.boldSystemFont(15); t.lineLimit = 2;\n    const u0 = upcoming[0], live0 = u0.d === todayIso && u0.s <= nowMin;\n    text(w, (live0 ? \"jusqu'à \" + hm(u0.e) : label(u0) + hm(u0.s)) + (u0.w ? \" · \" + u0.w : \"\"), 11, soft);\n  } else {\n    text(w, \"Agenda libre\", 15, ink, \"bold\");\n  }\n  w.addSpacer();\n  text(w, nTodo + \" tâche\" + (nTodo > 1 ? \"s\" : \"\") + (steps.g ? \" · \" + Math.round((steps.v || 0) / steps.g * 100) + \" % pas\" : \"\"), 11, soft, \"semi\");\n} else {\n  const max = fam === \"large\" ? 6 : 3;\n  if (!upcoming.length) text(w, \"Rien de prévu dans les prochains jours.\", 13, ink, \"semi\");\n  upcoming.slice(0, max).forEach((e, i) => { eventRow(w, e, i === 0 && fam === \"large\"); w.addSpacer(fam === \"large\" ? 7 : 5); });\n  if (fam === \"large\" && data.tasks && data.tasks.top && data.tasks.top.length) {\n    w.addSpacer(4);\n    text(w, \"À faire\", 11, faint, \"semi\");\n    data.tasks.top.slice(0, 3).forEach(t => text(w, \"○  \" + t, 12, ink));\n  }\n  w.addSpacer();\n  const foot = w.addStack();\n  foot.centerAlignContent();\n  text(foot, nTodo + \" tâche\" + (nTodo > 1 ? \"s\" : \"\") + \" aujourd'hui\", 10.5, soft, \"semi\");\n  foot.addSpacer();\n  if (steps.g) text(foot, Math.round(steps.v || 0).toLocaleString(\"fr-FR\") + \" / \" + steps.g.toLocaleString(\"fr-FR\") + \" pas\", 10.5, soft, \"semi\");\n  if (data.focus && data.focus.v) { foot.addSpacer(8); text(foot, \"Focus \" + Math.floor(data.focus.v / 60) + \" h \" + pad(data.focus.v % 60), 10.5, soft, \"semi\"); }\n}\n\nif (config.runsInWidget) Script.setWidget(w);\nelse await w.presentMedium();\nScript.complete();\n";
+var wgLast = "", wgAt = 0, wgTimer = null;
+function wgSnap(){
+  var days = [];
+  for (var i = 0; i < 7; i++){
+    var d = addDays(TODAY, i);
+    var ev = eventsFor(d).filter(e => e.acc !== "focus" || e.src === "planner").sort((a, b) => a.start - b.start).slice(0, 12)
+      .map(e => ({t:String(e.title || "").slice(0, 60), s:e.start, e:e.end, w:isVisio(e.where) || /^https?:/i.test(e.where || "") ? "Visio" : String(e.where || "").split(",")[0].slice(0, 40), c:e.acc === "perso" ? "perso" : e.acc === "focus" ? "focus" : "pro"}));
+    days.push({d:iso(d), ev});
+  }
+  var todo = sortTasks(store.tasks.filter(isToday)).filter(t => !t.done);
+  return {v:1, days, tasks:{n:todo.length, top:todo.slice(0, 3).map(t => String(t.title).slice(0, 50))},
+    steps:{v:stepsOn(TODAY_ISO) || 0, g:stepGoal()}, focus:{v:typeof focusMinOn === "function" ? focusMinOn(TODAY_ISO) : 0, g:typeof focusGoalMin === "function" ? focusGoalMin() : 0}};
+}
+function wgPushSoon(){
+  if (!ls.get("wgOn", false) || !(typeof currentUser !== "undefined" && currentUser) || store.mode !== "db") return;
+  clearTimeout(wgTimer);
+  wgTimer = setTimeout(async () => {
+    var snap = wgSnap(), j = JSON.stringify(snap);
+    if (j === wgLast) return;
+    if (Date.now() - wgAt < 90000){ wgTimer = setTimeout(wgPushSoon, 90000 - (Date.now() - wgAt)); return; }
+    try { await msCall("/widget/push", {snap:Object.assign(snap, {at:Date.now()})}); wgLast = j; wgAt = Date.now(); } catch(e){}
+  }, 4000);
+}
+async function wgKey(fresh){
+  var k = ls.get("wgKey", "");
+  if (k && !fresh) return k;
+  var d = await msCall("/widget/link", {});
+  ls.set("wgKey", d.key); ls.set("wgOn", true); wgLast = ""; wgAt = 0;
+  return d.key;
+}
+function wgScript(k){ return WG_SCRIPT.replace("__KEY__", k).replace("__API__", iphBase()).replace("__SITE__", location.origin + location.pathname); }
+async function wgCopy(fresh){
+  var msg = $("#wgMsg");
+  if (!(typeof currentUser !== "undefined" && currentUser)){ msg.textContent = "Connecte-toi d'abord."; return; }
+  msg.textContent = "Préparation…";
+  try {
+    var k = await wgKey(fresh), txt = wgScript(k);
+    wgLast = ""; wgAt = 0; wgPushSoon();
+    try { await navigator.clipboard.writeText(txt); msg.textContent = "Script copié. Colle-le dans Scriptable."; }
+    catch(e){ var ta = document.createElement("textarea"); ta.value = txt; document.body.appendChild(ta); ta.select(); try { document.execCommand("copy"); msg.textContent = "Script copié. Colle-le dans Scriptable."; } catch(e2){ msg.textContent = "Copie impossible ici : réessaie depuis Safari."; } ta.remove(); }
+    $("#wgNew").hidden = false;
+  } catch(e){ msg.textContent = "Impossible de créer la clé pour le moment."; }
+}
+$("#wgCopy").addEventListener("click", () => wgCopy(false));
+$("#wgNew").addEventListener("click", () => { if (confirm("Créer une nouvelle clé ? L'ancien widget cessera de se mettre à jour : il faudra recoller le script.")) wgCopy(true); });
+$("#wgNew").hidden = !ls.get("wgKey", "");
 })();
 </script>
 </body>
