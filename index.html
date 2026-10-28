@@ -9,6 +9,7 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Aube">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<script>(function(){try{var t=JSON.parse(localStorage.getItem("aube.theme")||'"auto"');if(t==="light"||t==="dark")document.documentElement.setAttribute("data-theme",t);}catch(e){}})();</script>
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png" type="image/png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
@@ -1103,6 +1104,7 @@ body.locked{overflow:hidden}
             <article class="card">
               <ul class="settings">
                 <li><label for="sName">Prénom</label><input id="sName" maxlength="40"></li>
+                <li><label for="sTheme">Apparence</label><select id="sTheme"><option value="auto">Automatique</option><option value="light">Clair</option><option value="dark">Sombre</option></select></li>
                 <li><label for="sHour">Heure d'envoi</label><input id="sHour" type="time" value="07:30"></li>
                 <li><label for="sTone">Ton du brief</label><select id="sTone"><option value="direct">Direct et concis</option><option value="coach">Coach motivant</option><option value="detail">Détaillé</option></select></li>
                 <li><label for="sTmr">Aperçu de demain</label><input type="checkbox" class="switch" id="sTmr" checked></li>
@@ -3953,6 +3955,23 @@ $("#wgNew").hidden = !ls.get("wgKey", "");
     if (n.matches && n.matches('input[type="date"],input[type="time"]')) enhance(n);
     else if (n.querySelectorAll) n.querySelectorAll('input[type="date"],input[type="time"]').forEach(enhance);
   }))).observe(document.body, {childList:true, subtree:true});
+})();
+
+/* ---------- Apparence (clair / sombre) ---------- */
+(function(){
+  var mq = window.matchMedia ? matchMedia("(prefers-color-scheme: dark)") : null;
+  var meta = document.querySelector('meta[name="theme-color"]'), metaLight = meta ? meta.getAttribute("content") : "";
+  function apply(){
+    var t = ls.get("theme", "auto"), root = document.documentElement;
+    if (t === "light" || t === "dark") root.setAttribute("data-theme", t); else root.removeAttribute("data-theme");
+    var dark = t === "dark" || (t !== "light" && mq && mq.matches);
+    root.style.colorScheme = dark ? "dark" : "light";
+    if (meta) meta.setAttribute("content", dark ? "#04060C" : metaLight);
+  }
+  var sel = document.getElementById("sTheme");
+  if (sel){ sel.value = ls.get("theme", "auto"); sel.addEventListener("change", e => { ls.set("theme", e.target.value); apply(); }); }
+  if (mq && mq.addEventListener) mq.addEventListener("change", apply);
+  apply();
 })();
 })();
 </script>
