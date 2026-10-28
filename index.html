@@ -580,6 +580,18 @@ body:has(.evs-back:not([hidden])) .assist,body:has(.evs-back:not([hidden])) .tab
 .wg-prev b{font-size:12px}.wg-prev span{font-size:10px;opacity:.7;margin-top:auto}.wg-prev i{font-style:normal;font-weight:700;font-size:13.5px;line-height:1.15}.wg-prev small{font-size:10.5px;opacity:.8}
 .wg-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:1.4}
 @media (max-width:520px){.wg-prev{width:96px;height:96px;border-radius:20px;padding:10px}.wg-prev i{font-size:12px}}
+.dtw{position:relative;display:block;min-width:0;max-width:100%}
+.dtw > input.dt-nat{position:absolute;inset:0;width:100%;height:100%;opacity:0;pointer-events:none;z-index:0;margin:0}
+.dtw.touch > input.dt-nat{pointer-events:auto;z-index:2;font-size:16px}
+.dtw > input.dt-txt{position:relative;z-index:1;width:100%;padding-right:40px;font-variant-numeric:tabular-nums}
+.dtw.touch > input.dt-txt{caret-color:transparent}
+.dtw > .dt-btn{position:absolute;right:4px;top:50%;transform:translateY(-50%);z-index:1;width:34px;height:34px;border:0;background:none;color:var(--muted);display:grid;place-items:center;border-radius:9px;cursor:pointer;padding:0}
+.dtw > .dt-btn:hover{color:var(--ink);background:var(--line)}
+.dtw > .dt-btn svg{width:18px;height:18px}
+.dtw > input.dt-txt.bad{box-shadow:0 0 0 2px color-mix(in srgb,#e5484d 65%,transparent)}
+.settings .dtw{display:inline-block;width:auto;max-width:60%}
+.settings .dtw > input.dt-txt{width:5.2em;padding-right:0}
+.settings .dtw > .dt-btn{display:none}
 .place-form.editing{background:color-mix(in srgb,var(--accent) 6%,transparent)}
 .pf-btns{display:flex;gap:8px}
 #placeList li.editing{background:color-mix(in srgb,var(--accent) 8%,transparent)}
@@ -3842,6 +3854,106 @@ async function wgCopy(fresh){
 $("#wgCopy").addEventListener("click", () => wgCopy(false));
 $("#wgNew").addEventListener("click", () => { if (confirm("Créer une nouvelle clé ? L'ancien widget cessera de se mettre à jour : il faudra recoller le script.")) wgCopy(true); });
 $("#wgNew").hidden = !ls.get("wgKey", "");
+
+/* ---------- Dates et heures au format français ---------- */
+(function(){
+  var VAL = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value");
+  var TOUCH = window.matchMedia && matchMedia("(pointer: coarse)").matches;
+  var p2 = n => String(n).padStart(2, "0");
+  function show(type, v){
+    if (!v) return "";
+    if (type === "date"){ var m = v.match(/^(\d{4})-(\d{2})-(\d{2})$/); return m ? m[3] + "/" + m[2] + "/" + m[1] : ""; }
+    var t = v.match(/^(\d{2}):(\d{2})/); return t ? t[1] + ":" + t[2] : "";
+  }
+  function parse(type, s){
+    s = (s || "").trim();
+    if (!s) return "";
+    if (type === "date"){
+      var m = s.match(/^(\d{1,2})[\/.\- ]?(\d{1,2})(?:[\/.\- ]?(\d{2}|\d{4}))?$/);
+      if (!m) return null;
+      var d = +m[1], mo = +m[2], y = m[3] ? +m[3] : new Date().getFullYear();
+      if (y < 100) y += 2000;
+      var dt = new Date(y, mo - 1, d);
+      if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return null;
+      return y + "-" + p2(mo) + "-" + p2(d);
+    }
+    var t = s.match(/^(\d{1,2})(?:\s*[:hH.]\s*(\d{2})?|(\d{2}))?$/);
+    if (!t) return null;
+    var h = +t[1], mi = +(t[2] || t[3] || 0);
+    if (h > 23 || mi > 59) return null;
+    return p2(h) + ":" + p2(mi);
+  }
+  function enhance(nat){
+    if (nat.dataset.fr || !nat.parentNode) return;
+    var type = nat.type; if (type !== "date" && type !== "time") return;
+    nat.dataset.fr = "1";
+    var wrap = document.createElement("span"); wrap.className = "dtw" + (TOUCH ? " touch" : "");
+    var txt = document.createElement("input");
+    txt.type = "text"; txt.className = "dt-txt"; txt.autocomplete = "off"; txt.spellcheck = false;
+    txt.inputMode = "numeric"; txt.placeholder = type === "date" ? "jj/mm/aaaa" : "hh:mm";
+    txt.maxLength = type === "date" ? 10 : 5;
+    var lab = nat.id && document.querySelector('label[for="' + nat.id + '"]');
+    txt.setAttribute("aria-label", (lab ? lab.textContent.trim() + " " : "") + "(" + txt.placeholder + ")");
+    if (TOUCH){ txt.readOnly = true; txt.tabIndex = -1; }
+    var btn = document.createElement("button");
+    btn.type = "button"; btn.className = "dt-btn"; btn.tabIndex = -1;
+    btn.setAttribute("aria-label", type === "date" ? "Ouvrir le calendrier" : "Choisir l'heure");
+    btn.innerHTML = '<svg><use href="#' + (type === "date" ? "i-cal" : "i-clock") + '"/></svg>';
+    nat.parentNode.insertBefore(wrap, nat);
+    wrap.appendChild(txt); wrap.appendChild(nat); wrap.appendChild(btn);
+    nat.classList.add("dt-nat"); nat.tabIndex = -1;
+    var sync = () => { txt.value = show(type, VAL.get.call(nat)); txt.classList.remove("bad"); };
+    Object.defineProperty(nat, "value", { configurable:true, get(){ return VAL.get.call(this); }, set(v){ VAL.set.call(this, v); sync(); } });
+    nat.addEventListener("input", sync); nat.addEventListener("change", sync);
+    var commit = () => {
+      var v = parse(type, txt.value);
+      if (v === null){ txt.classList.add("bad"); return false; }
+      txt.classList.remove("bad");
+      if (v !== VAL.get.call(nat)){
+        VAL.set.call(nat, v);
+        nat.dispatchEvent(new Event("input", {bubbles:true}));
+        nat.dispatchEvent(new Event("change", {bubbles:true}));
+      }
+      txt.value = show(type, v);
+      return true;
+    };
+    nat._frCommit = commit;
+    txt.addEventListener("input", e => {
+      var it = e.inputType || "";
+      if (it.indexOf("delete") !== 0){
+        var sep = type === "date" ? "/" : ":";
+        if (/^\d{2}$/.test(txt.value) || (type === "date" && /^\d{2}\/\d{2}$/.test(txt.value))) txt.value += sep;
+      }
+      txt.classList.remove("bad");
+      if (txt.value.length === txt.maxLength && parse(type, txt.value)) commit();
+    });
+    txt.addEventListener("change", commit);
+    txt.addEventListener("blur", () => { if (!commit()){ /* on garde la saisie en rouge pour correction */ } });
+    txt.addEventListener("keydown", e => {
+      if (e.key === "ArrowDown" && e.altKey){ e.preventDefault(); openPicker(); }
+    });
+    function openPicker(){
+      try { if (nat.showPicker){ nat.showPicker(); return; } } catch(e){}
+      try { nat.focus(); nat.click(); } catch(e){}
+    }
+    btn.addEventListener("click", e => { e.preventDefault(); openPicker(); });
+    if (lab) lab.addEventListener("click", e => { e.preventDefault(); if (TOUCH) openPicker(); else txt.focus(); });
+    var f = nat.form; if (f && !f._frReset){ f._frReset = true; f.addEventListener("reset", () => setTimeout(() => f.querySelectorAll("input.dt-nat").forEach(n => n.dispatchEvent(new Event("change")) ), 0)); }
+    sync();
+  }
+  // avant tout envoi de formulaire, on valide ce qui a été tapé
+  document.addEventListener("submit", e => {
+    var bad = false;
+    e.target.querySelectorAll && e.target.querySelectorAll("input.dt-nat").forEach(n => { if (n._frCommit && !n._frCommit()) bad = true; });
+    if (bad){ e.preventDefault(); e.stopImmediatePropagation(); var b = e.target.querySelector(".dt-txt.bad"); if (b) b.focus(); toast("Date ou heure à corriger (format jj/mm/aaaa, hh:mm)."); }
+  }, true);
+  document.querySelectorAll('input[type="date"],input[type="time"]').forEach(enhance);
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => {
+    if (n.nodeType !== 1) return;
+    if (n.matches && n.matches('input[type="date"],input[type="time"]')) enhance(n);
+    else if (n.querySelectorAll) n.querySelectorAll('input[type="date"],input[type="time"]').forEach(enhance);
+  }))).observe(document.body, {childList:true, subtree:true});
+})();
 })();
 </script>
 </body>
